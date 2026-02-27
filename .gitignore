@@ -1,0 +1,35 @@
+# =========================
+# 1. Python & Backend
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+.venv/
+
+# =========================
+# 2. Database
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# 3. Node & Vite Frontend
+# =========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+
+# =========================
+# 4. OS & Editor Files
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

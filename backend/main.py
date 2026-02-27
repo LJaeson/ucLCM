@@ -1,13 +1,240 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Response, Request, Header, HTTPException
+import os
+import uuid
+from dotenv import load_dotenv
+from sqlmodel import Field, Session, SQLModel, create_engine, select, func, desc
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from fastapi.middleware.cors import CORSMiddleware
+# from sqlalchemy import func
+
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./checkins.db")
+ADDRESS = os.getenv("ADDRESS")
+
+class CheckIn(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    zid: str
+    # name: str
+    # program: int
+    helps: str
+    time: datetime
+    signed: bool
+    food: bool
+    signature_token: str
+
+class User(SQLModel, table=True):
+    session_id: str = Field(primary_key=True)
+    zid: str
+    name: str
+    program: int
+    total_signature: int
+    current_signature: int
+
+engine = create_engine(DATABASE_URL)
+
+SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",          
+        "http://127.0.0.1:5173",          
+        "http://192.168.0.7:5173",        
+        f"{ADDRESS}:5173"
+    ], # Update this if Vite port changes
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+@app.post("/checkin")
+async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
+
+    # checkin_time = datetime.fromisoformat(data['time'].replace('Z', '+00:00'))
+    checkin_time = datetime.now(ZoneInfo("Australia/Sydney"))
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+    raw_helps = data.get('helps', [])
+    if isinstance(raw_helps, list):
+        helps_string = ",".join(str(item) for item in raw_helps)
+    else:
+        helps_string = str(raw_helps)
+
+    # if the student zid is already recorded
+    new_session_id = str(uuid.uuid4())
+    raw_zid = data['zid']
+    statement = select(User).where(User.zid == raw_zid)
+    record = session.exec(statement).first()
+    if record:
+        print("have record")
+
+        record.session_id = new_session_id
+        record.name = data['name']
+        record.program = data.get('program', '')
+
+        session.add(record)
+
+    else:
+        # generate new session id
+        user_session = User(
+            session_id=new_session_id, 
+            zid=data['zid'], 
+            name=data['name'],
+            program=data.get('program', ''),
+            total_signature=0,
+            current_signature=0
+        )
+        session.add(user_session)
+
+    # Create a new row in the database
+    new_checkin = CheckIn(
+        zid=data['zid'],
+        # name=data['name'],
+        # program=data.get('program', ''), # .get() prevents crashes if missing
+        helps=helps_string,
+        time=checkin_time,
+        signed=False,
+        food=False,
+        signature_token=uuid.uuid4().hex[:8]
+    )
+    session.add(new_checkin)
+
+    session.commit()
+    # session.refresh(new_checkin)
+
+    response.set_cookie(
+        key="session_id",
+        value=new_session_id,
+        max_age=60,
+        httponly=True,
+        samesite='lax'
+    )
+
+
+    print(f"Success: {new_checkin.zid} saved to DB with ID {new_checkin.id} with sessionid {new_session_id}")
+    return {"status": "success"}
+
+
+def find_user_by_session(request: Request, session: Session):
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        return None
+    return session.get(User, session_id)
+
+
+@app.get("/whoami")
+async def get_user(request: Request, session: Session = Depends(get_session)):
+    # Check if the cookie exists
+    user = find_user_by_session(request, session)
+    if not user:
+        return {"recorded": False}
+
+    return {
+        "recorded": True,
+        "zid": user.zid,
+        "name": user.name,
+        "program": user.program,
+        "current_signature:": user.current_signature
+    }
+
+
+
+@app.get("/qrcode")
+async def get_qrcode(request: Request,  session: Session = Depends(get_session)):
+    # user zid
+    user = find_user_by_session(request, session)
+
+    if not user:
+        return {"error": "User not found"}
+    
+    zid = user.zid
+
+    # date
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    row = session.exec(statement).first()
+
+    if row is None:
+        return {"error": "Time not found"}
+    
+    print(row.time)
+    target_time = row.time + timedelta(minutes=1)
+    time_left = target_time - curr_time
+    seconds_left = int(time_left.total_seconds())
+
+    if seconds_left <= 0:
+        date_str = curr_time.strftime("%Y%m%d")
+        random_str = row.signature_token
+        scan_url = f"{ADDRESS}:5173/admin/stamp/{zid}{date_str}{random_str}"
+        
+        return {
+            "is_time": True,
+            "qrcode": scan_url
+        }
+
+    return {
+        "is_time": False,
+        "rest_time": seconds_left
+    }
+
+@app.post("/scan/{qr_code}")
+async def scan_qrcode(
+    qr_code: str, 
+    request: Request, 
+    session: Session = Depends(get_session),
+    # Require an admin password to be sent in the request headers
+    x_admin_token: str = Header(None) 
+):
+
+    if x_admin_token != "my-super-secret-admin-password":
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    if len(qr_code) < 16:
+        return {"status": "error", "message": "Invalid QR code format"}
+    
+    signature_token = qr_code[-8:]
+    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
+    row = session.exec(statement).first()
+    if not row:
+        return {"status": "error", "message": "No check-in found for today"}
+    
+    if row.signed:
+        return {"status": "error", "message": "Already checked in for today"}
+
+    row.signed = True
+    session.add(row)
+
+    # session.refresh(row)
+
+
+    zid = qr_code[:8]
+    user_statement = select(User).where(User.zid == zid)
+    target_user = session.exec(user_statement).first()
+    if not target_user:
+        return {"status": "error", "message": "User account not found"}
+    
+    target_user.total_signature += 1
+    target_user.current_signature += 1
+    session.add(target_user)
+
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
+    }

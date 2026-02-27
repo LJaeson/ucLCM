@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import "tailwindcss";
 import SelectionBox from './components/SelectionBox';
 import ParticlesBg from './components/ParticlesBg';
 import LightGradient from './components/LightGrandient';
 import FlyingPentagon from './components/FlyingPentagon';
 
+const ADDRESS = import.meta.env.VITE_ADDRESS
 
 export default function CheckinPage({setFinish, setStart}) {
   const [selectedProgram, setSelectedProgram] = useState();
@@ -14,7 +15,7 @@ export default function CheckinPage({setFinish, setStart}) {
   const q1options = [
     { id: 1, title: 'Diploma'},
     { id: 2, title: 'Foundation Studies'},
-    { id: 3, title: 'Academic English Progrma'},
+    { id: 3, title: 'Academic English Program'},
     { id: 4, title: 'Pre-Masters'}
   ];
 
@@ -44,31 +45,59 @@ export default function CheckinPage({setFinish, setStart}) {
   const [zid, setZid] = useState('');
   const [isFinished, setIsFinished] = useState(false);
 
+  useEffect(() => {
+    const checkExistingSession = async () => {
+        try {
+            const response = await fetch(`${ADDRESS}:8000/whoami`, {
+                method: "GET",
+                credentials: "include", 
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // auto-fill the states, to be remake
+                if (data.recorded) {
+                  setName(data.name);
+                  setZid(data.zid);
+                  console.log(`Welcome back, ${data.name}!`);
+                }
+            }
+        } catch (error) {
+            console.error("Could not check session:", error);
+        }
+    };
+
+    checkExistingSession();
+  }, []); 
+
+    
   // This function runs when the button is clicked
   const handleCheckIn = async () => {
     setIsFinished(true);
 
-    // try {
-    //   // 1. Send the POST request to Python
-    //   const response = await fetch("http://localhost:8000/checkin", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     // 2. Package the data as a JSON string
-    //     body: JSON.stringify({ 
-    //       student_name: name, 
-    //       student_zid: zid 
-    //     }),
-    //   });
+    try {
+      const response = await fetch(`${ADDRESS}:8000/checkin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          name: name, 
+          zid: zid,
+          program: selectedProgram,
+          helps: selectedHelps,
+          time: new Date().toISOString()
+        }),
+        credentials: "include",
+      });
 
-    //   // 3. Wait for Python to reply
-    //   if (response.ok) {
-    //     // const data = await response.json();
-    //   }
-    // } catch (error) {
-    //   print(error);
-    // }
+      if (response.ok) {
+        // const data = await response.json();
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
 
@@ -141,7 +170,7 @@ export default function CheckinPage({setFinish, setStart}) {
           />
         </div>
         
-        <div className='w-[100%] p-3 pb-10'>
+        <div className='w-[100%] p-3 pb-5'>
           <button 
             onClick={handleCheckIn}
             className="w-[100%] px-8 py-2 rounded-md bg-teal-500 text-white font-bold transition duration-200 hover:bg-white hover:text-black border-2 border-transparent hover:border-teal-500"
@@ -150,14 +179,12 @@ export default function CheckinPage({setFinish, setStart}) {
           </button>
         </div>
 
-
+        <div className='self-center flex items-center justify-center pb-5'>
+          <p className='text-sm'>Made by Peer Leaders with ❤️</p>
+        </div>
 
       </div>
     </div>
   );
-
-
-
-
 
 }

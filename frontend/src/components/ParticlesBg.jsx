@@ -19,9 +19,9 @@ export default function ParticlesBg() {
     <Particles
       id="tsparticles"
       options={{
-        fullScreen: { enable: false }, // Crucial: This keeps it inside the nav
+        fullScreen: { enable: false }, // keeps it inside the nav
         background: {
-          color: { value: "transparent" }, // Let your nav bg show through
+          color: { value: "transparent" }, // Let nav bg show through
         },
         fpsLimit: 120,
         interactivity: {

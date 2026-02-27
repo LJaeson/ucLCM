@@ -8,13 +8,10 @@ export default function FlyingPentagon({setFinish, setStart}) {
     const [five, setFive] = useState(false);
 
     useEffect(() => {
-        // Pentagon 1 delay
         const timer1 = setTimeout(() => setOne(true), 250);
         
-        // Pentagon 2 delay (starts 400ms after the first)
         const timer2 = setTimeout(() => setTwo(true), 400);
         
-        // Pentagon 3 delay (starts 600ms after the first)
         const timer3 = setTimeout(() => setThree(true), 550);
         const timer4 = setTimeout(() => setFour(true), 650);
         const timer5 = setTimeout(() => setFive(true), 720);
