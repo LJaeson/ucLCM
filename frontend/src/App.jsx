@@ -5,6 +5,7 @@ import CheckinPage from './CheckinPage1';
 import CheckinPage2 from './CheckinPage2';
 import SuccessPage from './SuccessPage';
 import AdminStampPage from './AdminStampPage';
+import AdminLoginPage from './AdminLoginPage';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -84,9 +85,11 @@ export default function App() {
             {/* Default route: The student lands here to check in */}
             <Route path="/" element={<Checkin/>} />
             {/* <Route path="/" element={<CheckinPage2/>} /> */}
+
+            {/* the admin login page */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
             
-            {/* The secret admin route. 
-                The ":qrCodeString" is a dynamic parameter */}
+            {/* The secret admin route.  */}
             <Route path="/admin/stamp/:qrCodeString" element={<AdminStampPage />} />
         </Routes>
       </BrowserRouter>

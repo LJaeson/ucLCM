@@ -28,8 +28,8 @@ export default function AdminStampPage() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "x-admin-token": "my-super-secret-admin-password" 
-                    }
+                    },
+                    credentials: "include"
                 });
 
                 const data = await response.json();

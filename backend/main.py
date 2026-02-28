@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./checkins.db")
 ADDRESS = os.getenv("ADDRESS")
+PEERLEADER_PASSWORD = os.getenv("PEERLEADER_PASSWORD")
 
 class CheckIn(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -30,6 +31,12 @@ class User(SQLModel, table=True):
     program: int
     total_signature: int
     current_signature: int
+
+class Admin(SQLModel, table=True):
+    session_id: str = Field(primary_key=True)
+    name: str
+    role: str
+    expires_at: datetime
 
 engine = create_engine(DATABASE_URL)
 
@@ -113,7 +120,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     response.set_cookie(
         key="session_id",
         value=new_session_id,
-        max_age=60,
+        max_age=70,
         httponly=True,
         samesite='lax'
     )
@@ -136,9 +143,25 @@ async def get_user(request: Request, session: Session = Depends(get_session)):
     user = find_user_by_session(request, session)
     if not user:
         return {"recorded": False}
+    
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == user.zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    row = session.exec(statement).first()
+
+    checkined = False
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        checkined = True
 
     return {
         "recorded": True,
+        "checkined": checkined,
         "zid": user.zid,
         "name": user.name,
         "program": user.program,
@@ -198,12 +221,23 @@ async def scan_qrcode(
     request: Request, 
     session: Session = Depends(get_session),
     # Require an admin password to be sent in the request headers
-    x_admin_token: str = Header(None) 
+    # x_admin_token: str = Header(None) 
 ):
-
-    if x_admin_token != "my-super-secret-admin-password":
+    # authorizing
+    admin_session_id = request.cookies.get("admin_session_id")
+    if not admin_session_id:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
+    leader = session.get(Admin, admin_session_id)
+    if not leader:
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    
+    if curr_time > leader.expires_at:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+
+    #qrcode checking
     if len(qr_code) < 16:
         return {"status": "error", "message": "Invalid QR code format"}
     
@@ -238,3 +272,34 @@ async def scan_qrcode(
         "status": "success",
         "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
     }
+
+@app.post("/admin/login")
+async def admin_login(data: dict, response: Response, session: Session = Depends(get_session)):
+    if data.get("password") != PEERLEADER_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin password")
+        
+    leader_session_id = str(uuid.uuid4())
+
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    
+    expiration_time = curr_time + timedelta(seconds=120)
+    
+    new_leader = Admin(
+        session_id=leader_session_id,
+        name=data.get("name", "Unknown Leader"),
+        role= "Peer Leader",
+        expires_at=expiration_time
+    )
+    session.add(new_leader)
+    session.commit()
+    
+    response.set_cookie(
+        key="admin_session_id",
+        value=leader_session_id,
+        max_age=120,
+        # max_age=60 * 60 * 24 * 200, # 200 days
+        httponly=True,
+        samesite='lax'
+    )
+    
+    return {"status": "success", "name": new_leader.name}

@@ -60,7 +60,6 @@ export default function CheckinPage({setFinish, setStart}) {
                 if (data.recorded) {
                   setName(data.name);
                   setZid(data.zid);
-                  console.log(`Welcome back, ${data.name}!`);
                 }
             }
         } catch (error) {
@@ -73,7 +72,9 @@ export default function CheckinPage({setFinish, setStart}) {
 
     
   // This function runs when the button is clicked
-  const handleCheckIn = async () => {
+  const handleCheckIn = async (e) => {
+    if (e) e.preventDefault();
+    
     setIsFinished(true);
 
     try {
