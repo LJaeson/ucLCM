@@ -32,6 +32,7 @@ export default function CheckinPage({setFinish, setStart}) {
   ///////////////////////end of question list/////////////////////////////
   const handleSingleToggle = (id) => {
     setSelectedProgram(id); // Just save the string
+    setFormError("");
   };
 
   const handleMultiToggle = (id) => {
@@ -44,6 +45,30 @@ export default function CheckinPage({setFinish, setStart}) {
   const [name, setName] = useState('');
   const [zid, setZid] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [zidError, setZidError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  // Checks the name and updates the error state
+  const validateName = (currentName) => {
+    const cleanName = currentName.trim().split(/\s+/)[0];
+    if (!cleanName) {
+      setNameError("Please enter your name.");
+      return false;
+    }
+    setNameError(""); // Clear the error if it's valid!
+    return true;
+  };
+
+  // Checks the zID and updates the error state
+  const validateZid = (currentZid) => {
+    if (!/(^z\d{7}$)|(^\d{7})/i.test(currentZid.trim())) {
+      setZidError("Format must be z1234567.");
+      return false;
+    }
+    setZidError(""); // Clear the error if it's valid!
+    return true;
+  };
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -74,8 +99,24 @@ export default function CheckinPage({setFinish, setStart}) {
   // This function runs when the button is clicked
   const handleCheckIn = async (e) => {
     if (e) e.preventDefault();
-    
-    setIsFinished(true);
+
+    const isNameValid = validateName(name);
+    const isZidValid = validateZid(zid);
+
+    if (!selectedProgram) {
+      return setFormError("Please select your program.");
+    }
+
+    if (!isNameValid || !isZidValid) {
+      return
+    }
+
+    // formating the zid
+    let formatttedZid = zid.trim().toLowerCase();
+    if (!formatttedZid.startsWith('z')){
+      formatttedZid = `z${formatttedZid}`;
+    }
+
 
     try {
       const response = await fetch(`${ADDRESS}:8000/checkin`, {
@@ -85,7 +126,7 @@ export default function CheckinPage({setFinish, setStart}) {
         },
         body: JSON.stringify({ 
           name: name, 
-          zid: zid,
+          zid: formatttedZid,
           program: selectedProgram,
           helps: selectedHelps,
           time: new Date().toISOString()
@@ -94,6 +135,7 @@ export default function CheckinPage({setFinish, setStart}) {
       });
 
       if (response.ok) {
+        setIsFinished(true);
         // const data = await response.json();
       }
     } catch (error) {
@@ -133,26 +175,48 @@ export default function CheckinPage({setFinish, setStart}) {
             <h2 className="font-['Bebas_Neue'] text-center text-4xl font-medium">Welcome to Study Club!</h2>
           </div>
           <div className='min-h-[7vh]'></div>
-          <div >
+          <div className='mb-[-20px]' >
             <h3 className="p-1 pb-0 font-medium text-slate-700">Whats your name?</h3>
-            <div className='p-1.5'>
+            <div className='p-1.5 pb-[0px]'>
               <input 
                 type="text" 
                 // placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none focus:border-black transition-colors"
+                onBlur={(e)=> validateName(e.target.value)}
+                maxLength={50}
+                className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors 
+                  ${
+                    nameError
+                    ? 'border-red-500 focus:border-red-600'
+                    : 'border-gray-300 focus:border-black text-gray-900'
+                  }
+                `}
               />
+              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${nameError ? 'opacity-100' : 'opacity-0'}`}>
+                  {nameError || '\u00A0'} 
+              </p>
             </div>
-            <h3 className="p-1 font-medium text-slate-700">Whats your zid?</h3>
-            <div className='p-1.5'>
+
+            <h3 className="p-1 pt-[0px] mt-[-5px] font-medium text-slate-700">Whats your zid?</h3>
+            <div className='p-1.5 pb-[0px]'>
               <input 
                 type="text" 
                 value={zid}
                 onChange={(e) => setZid(e.target.value)}
+                onBlur={(e) => validateZid(e.target.value)}
                 placeholder="zxxxxxxx"
-                className="text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none focus:border-black transition-colors"
+                className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors
+                  ${
+                    zidError
+                    ? 'border-red-500 focus:border-red-600'
+                    : 'border-gray-300 focus:border-black text-gray-900'
+                  }
+                `}
               />
+              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${zidError ? 'opacity-100' : 'opacity-0'}`}>
+                  {zidError || '\u00A0'}
+              </p>
             </div>
           </div>
           <SelectionBox 
@@ -162,6 +226,11 @@ export default function CheckinPage({setFinish, setStart}) {
             handleToggle = {handleSingleToggle}
             isMulti = {false}
           />
+          {formError && (
+              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 opacity-100`}>
+                  {formError}
+              </p>
+          )}
           <SelectionBox 
             question={"How can we help you today?"}
             options =  {q2options}
