@@ -34,10 +34,10 @@ export default function FlyingPentagon({setFinish, setStart}) {
       <SendPentagon color="#E8FFD7" zIndex="z-40" />
       
       {one && <SendPentagon color="#93DA97" zIndex="z-50" />}
-      {two && <SendPentagon color="#5E936C" zIndex="z-60" />}
-      {three && <SendPentagon color="#3E5F44" zIndex="z-70" />}
-      {four && <SendPentagon color="#2F5249" zIndex="z-80" />}
-      {five && <SendPentagon color="#213C51" zIndex="z-90" />}
+      {two && <SendPentagon color="#5E936C" zIndex="z-[60]" />}
+      {three && <SendPentagon color="#3E5F44" zIndex="z-[70]" />}
+      {four && <SendPentagon color="#2F5249" zIndex="z-[80]" />}
+      {five && <SendPentagon color="#213C51" zIndex="z-[90]" />}
     </>
   );
 }

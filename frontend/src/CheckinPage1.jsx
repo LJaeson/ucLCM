@@ -169,7 +169,7 @@ export default function CheckinPage({setFinish, setStart}) {
         </nav> */}
 
 
-        <div className="flex flex-col gap-1 p-3">
+        <div className="flex flex-col gap-1 p-3 animate-fade-in">
           <div className='min-h-[12vh]'></div>
           <div className='flex self-center'>
             <h2 className="font-['Bebas_Neue'] text-center text-4xl font-medium">Welcome to Study Club!</h2>
@@ -250,7 +250,7 @@ export default function CheckinPage({setFinish, setStart}) {
         </div>
 
         <div className='self-center flex items-center justify-center pb-5'>
-          <p className='text-sm'>Made by Peer Leaders with ❤️</p>
+          <p className='text-sm'><mark className='opacity-30 bg-transparent'>Made with </mark>❤️</p>
         </div>
 
       </div>

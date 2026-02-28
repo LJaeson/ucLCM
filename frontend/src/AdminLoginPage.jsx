@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
                     />
                     <button 
                         type="submit" 
-                        className="mt-2 bg-[#213C51] text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition-all"
+                        className="mt-2 bg-[#213C51] text-white font-bold py-3 rounded-lg hover:bg-opacity-50 transition-all"
                     >
                         GAIN ACCESS
                     </button>
