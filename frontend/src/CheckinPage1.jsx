@@ -169,87 +169,99 @@ export default function CheckinPage({setFinish, setStart}) {
         </nav> */}
 
 
-        <div className="flex flex-col gap-1 p-3 animate-fade-in">
+        <div className="flex flex-col gap-1 p-3">
           <div className='min-h-[12vh]'></div>
-          <div className='flex self-center'>
+          <div className='flex self-center animate-fade-in [animation-fill-mode:both] [animation-delay:100ms]'>
             <h2 className="font-['Bebas_Neue'] text-center text-4xl font-medium">Welcome to Study Club!</h2>
           </div>
           <div className='min-h-[7vh]'></div>
           <div className='mb-[-20px]' >
-            <h3 className="p-1 pb-0 font-medium text-slate-700">Whats your name?</h3>
-            <div className='p-1.5 pb-[0px]'>
-              <input 
-                type="text" 
-                // placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={(e)=> validateName(e.target.value)}
-                maxLength={50}
-                className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors 
-                  ${
-                    nameError
-                    ? 'border-red-500 focus:border-red-600'
-                    : 'border-gray-300 focus:border-black text-gray-900'
-                  }
-                `}
-              />
-              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${nameError ? 'opacity-100' : 'opacity-0'}`}>
-                  {nameError || '\u00A0'} 
-              </p>
+            <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:300ms]">
+              <h3 className="p-1 pb-0 font-medium text-slate-700">Whats your name?</h3>
+              <div className='p-1.5 pb-[0px]'>
+                <input 
+                  type="text" 
+                  // placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={(e)=> validateName(e.target.value)}
+                  maxLength={50}
+                  className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors 
+                    ${
+                      nameError
+                      ? 'border-red-500 focus:border-red-600'
+                      : 'border-gray-300 focus:border-black text-gray-900'
+                    }
+                  `}
+                />
+                <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${nameError ? 'opacity-100' : 'opacity-0'}`}>
+                    {nameError || '\u00A0'} 
+                </p>
+              </div>
             </div>
 
-            <h3 className="p-1 pt-[0px] mt-[-5px] font-medium text-slate-700">Whats your zid?</h3>
-            <div className='p-1.5 pb-[0px]'>
-              <input 
-                type="text" 
-                value={zid}
-                onChange={(e) => setZid(e.target.value)}
-                onBlur={(e) => validateZid(e.target.value)}
-                placeholder="zxxxxxxx"
-                className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors
-                  ${
-                    zidError
-                    ? 'border-red-500 focus:border-red-600'
-                    : 'border-gray-300 focus:border-black text-gray-900'
-                  }
-                `}
-              />
-              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${zidError ? 'opacity-100' : 'opacity-0'}`}>
-                  {zidError || '\u00A0'}
-              </p>
+            <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:500ms]">
+              <h3 className="p-1 pt-[0px] mt-[-5px] font-medium text-slate-700">Whats your zid?</h3>
+              <div className='p-1.5 pb-[0px]'>
+                <input 
+                  type="text" 
+                  value={zid}
+                  onChange={(e) => setZid(e.target.value)}
+                  onBlur={(e) => validateZid(e.target.value)}
+                  placeholder="zxxxxxxx"
+                  className={`text-xl w-full bg-transparent border-b-2 border-gray-300 px-2 py-1 outline-none transition-colors
+                    ${
+                      zidError
+                      ? 'border-red-500 focus:border-red-600'
+                      : 'border-gray-300 focus:border-black text-gray-900'
+                    }
+                  `}
+                />
+                <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 ${zidError ? 'opacity-100' : 'opacity-0'}`}>
+                    {zidError || '\u00A0'}
+                </p>
+              </div>
             </div>
           </div>
-          <SelectionBox 
-            question={"Program?"}
-            options =  {q1options}
-            selectedIds = {selectedProgram}
-            handleToggle = {handleSingleToggle}
-            isMulti = {false}
-          />
-          {formError && (
+
+          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:700ms]">
+            <SelectionBox 
+              question={"Program?"}
+              options =  {q1options}
+              selectedIds = {selectedProgram}
+              handleToggle = {handleSingleToggle}
+              isMulti = {false}
+            />
+
+            {formError && (
               <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 opacity-100`}>
                   {formError}
               </p>
-          )}
-          <SelectionBox 
-            question={"How can we help you today?"}
-            options =  {q2options}
-            selectedIds = {selectedHelps}
-            handleToggle = {handleMultiToggle}
-            isMulti = {true}
-          />
+            )}
+          </div>
+
+          
+          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:900ms]">
+            <SelectionBox 
+              question={"How can we help you today?"}
+              options =  {q2options}
+              selectedIds = {selectedHelps}
+              handleToggle = {handleMultiToggle}
+              isMulti = {true}
+            />
+          </div>
         </div>
         
-        <div className='w-[100%] p-3 pb-5'>
+        <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-2 rounded-md bg-teal-500 text-white font-bold transition duration-200 hover:bg-white hover:text-black border-2 border-transparent hover:border-teal-500"
+            className="w-[100%] px-8 py-2 rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500"
           >
             Check in
           </button>
         </div>
 
-        <div className='self-center flex items-center justify-center pb-5'>
+        <div className='self-center flex items-center justify-center pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1300ms]'>
           <p className='text-sm'><mark className='opacity-30 bg-transparent'>Made with </mark>❤️</p>
         </div>
 

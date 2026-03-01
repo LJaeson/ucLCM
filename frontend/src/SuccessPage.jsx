@@ -12,7 +12,7 @@ export default function SuccessPage() {
     const [fadeIn, setFadeIn] = useState(false);
     const [restTime, setRestTime] = useState(null);
     const [qrcode, setQrcode] = useState("");
-    const [drawerFade, setDrawerFade] = useState(false);
+    // const [drawerFade, setDrawerFade] = useState(false);
 
     const formatTime = (totalSeconds) => {
         const minutes = Math.floor(totalSeconds / 60);
@@ -114,7 +114,7 @@ export default function SuccessPage() {
                         playsInline
                         onEnded={() => {
                             setVideoDone(true);
-                            setTimeout(() => setDrawerFade(true), 10);
+                            // setTimeout(() => setDrawerFade(true), 10);
                         }}
                     >
                         <source src={finishLogo} type="video/webm" />
@@ -134,7 +134,7 @@ export default function SuccessPage() {
                                 Please come back to us after <span>{formatTime(restTime)}</span> to get a stamp.
                             </p>
                         ) : qrcode ? (
-                            <div className="mt-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm shadow-lg">
+                            <div className="mt-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm shadow-lg animate-fade-in">
                                 <QRCodeSVG 
                                     value={qrcode} 
                                     size={140} 
@@ -154,9 +154,9 @@ export default function SuccessPage() {
             </div>
 
             {videoDone && (
-                <div className={`transition-opacity duration-[1200ms] ease-in-out ${drawerFade ? 'opacity-100' : 'opacity-0'}`}>
+                // <div className={`transition-opacity duration-[1200ms] ease-in-out ${drawerFade ? 'opacity-100' : 'opacity-0'}`}>
                     <FoodDrawer/>
-                </div>
+                // </div>
             )}
         </div>
     );

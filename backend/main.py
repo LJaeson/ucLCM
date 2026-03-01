@@ -120,7 +120,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     response.set_cookie(
         key="session_id",
         value=new_session_id,
-        max_age=70,
+        max_age=600,
         httponly=True,
         samesite='lax'
     )
@@ -303,3 +303,53 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
     )
     
     return {"status": "success", "name": new_leader.name}
+
+
+@app.patch("/checkin/food")
+async def collect_food(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == user.zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    row = session.exec(statement).first()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="No check-in found for today")
+
+    row.food = True
+    session.add(row)
+    session.commit()
+
+    return {"status": "success", "message": "Food collected"}
+
+
+@app.get("/status/food")
+async def food_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == user.zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    row = session.exec(statement).first()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="No check-in found for today")
+
+    return {"food": row.food}
