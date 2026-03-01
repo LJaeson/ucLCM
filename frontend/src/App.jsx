@@ -83,8 +83,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
             {/* Default route: The student lands here to check in */}
-            {/* <Route path="/" element={<Checkin/>} /> */}
-            <Route path="/" element={<CheckinPage2/>} />
+            <Route path="/" element={<Checkin/>} />
+            {/* <Route path="/" element={<CheckinPage2/>} /> */}
 
             {/* the admin login page */}
             <Route path="/admin/login" element={<AdminLoginPage />} />

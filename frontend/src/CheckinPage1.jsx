@@ -154,13 +154,13 @@ export default function CheckinPage({setFinish, setStart}) {
         <div className="absolute inset-0 -z-10">
           <ParticlesBg />
         </div>
-        {/* 
-        <nav className="flex w-full bg-white/30 backdrop-blur-md border-b border-white/50 min-h-[12vh] backdrop-blur-md  top-0 z-50  flex-row-reverse relative overflow-hidden ">
+        
+        {/* <nav className="flex w-full bg-white/30 backdrop-blur-md border-b border-white/50 min-h-[12vh] backdrop-blur-md  top-0 z-50  flex-row-reverse relative overflow-hidden ">
           <ParticlesBg />
 
           <div className='flex flex-row-reverse items-center'>
             <div className="flex-shrink-0">
-              <span className="inline-flex flex-row-reverse items-center min-w-[3.5rem] min-h-[3.5rem] bg-black font-bebas text-sm tracking-widest text-white text-sm leading-3">
+              <span className="inline-flex flex-row-reverse items-center min-w-[3.5rem] min-h-[3.5rem] bg-black font-bebas text-no tracking-widest text-white leading-[11px]">
                 STUDY<br/>CLUB
               </span>
             </div>
