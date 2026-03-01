@@ -142,7 +142,9 @@ def find_user_by_session(request: Request, session: Session):
     session_id = request.cookies.get("session_id")
     if not session_id:
         return None
-    return session.get(User, session_id)
+    
+    statement = select(User).where(User.session_id == session_id)
+    return session.exec(statement).first()
 
 
 @app.get("/whoami")
@@ -236,7 +238,9 @@ async def scan_qrcode(
     if not admin_session_id:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
-    leader = session.get(Admin, admin_session_id)
+    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
+    leader = session.exec(leader_statement).first()
+    
     if not leader:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
