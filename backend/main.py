@@ -57,9 +57,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",          
-        "http://127.0.0.1:5173",          
-        "http://192.168.0.7:5173",        
-        f"{ADDRESS}:5173"
+        "http://127.0.0.1:5173",
+        "https://unswcollegestudyclub.com",       
+        "http://192.168.0.7:5173",
+        f"{ADDRESS}"
     ], # Update this if Vite port changes
     allow_credentials=True,
     allow_methods=["*"],
