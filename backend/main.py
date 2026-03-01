@@ -29,7 +29,8 @@ class CheckIn(SQLModel, table=True):
     signature_token: str
 
 class User(SQLModel, table=True):
-    session_id: str = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+    session_id: str = Field(index=True)
     zid: str
     name: str
     program: int
@@ -37,7 +38,8 @@ class User(SQLModel, table=True):
     current_signature: int
 
 class Admin(SQLModel, table=True):
-    session_id: str = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+    session_id: str = Field(index=True)
     name: str
     role: str
     expires_at: datetime
@@ -71,7 +73,7 @@ app.add_middleware(
 async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
 
     # checkin_time = datetime.fromisoformat(data['time'].replace('Z', '+00:00'))
-    checkin_time = datetime.now(ZoneInfo("Australia/Sydney"))
+    checkin_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
 
 
     raw_helps = data.get('helps', [])
@@ -209,7 +211,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
     if seconds_left <= 0:
         date_str = curr_time.strftime("%Y%m%d")
         random_str = row.signature_token
-        scan_url = f"{ADDRESS}:5173/admin/stamp/{zid}{date_str}{random_str}"
+        scan_url = f"{ADDRESS}/admin/stamp/{zid}{date_str}{random_str}"
         
         return {
             "is_time": True,
@@ -288,7 +290,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
 
     curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
     
-    expiration_time = curr_time + timedelta(seconds=120)
+    expiration_time = curr_time + timedelta(seconds=60 * 60 * 24 * 200)
     
     new_leader = Admin(
         session_id=leader_session_id,
