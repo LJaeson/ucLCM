@@ -10,6 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./checkins.db")
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 ADDRESS = os.getenv("ADDRESS")
 PEERLEADER_PASSWORD = os.getenv("PEERLEADER_PASSWORD")
 
@@ -122,7 +126,8 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         value=new_session_id,
         max_age=60*60*24*365,
         httponly=True,
-        samesite='lax'
+        samesite='none',
+        secure=True,
     )
 
 
@@ -299,7 +304,8 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
         # max_age=120,
         max_age=60 * 60 * 24 * 200, # 200 days
         httponly=True,
-        samesite='lax'
+        samesite='none',
+        secure=True,
     )
     
     return {"status": "success", "name": new_leader.name}
