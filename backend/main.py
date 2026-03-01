@@ -120,7 +120,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     response.set_cookie(
         key="session_id",
         value=new_session_id,
-        max_age=600,
+        max_age=60*60*24*365,
         httponly=True,
         samesite='lax'
     )
@@ -296,8 +296,8 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
     response.set_cookie(
         key="admin_session_id",
         value=leader_session_id,
-        max_age=120,
-        # max_age=60 * 60 * 24 * 200, # 200 days
+        # max_age=120,
+        max_age=60 * 60 * 24 * 200, # 200 days
         httponly=True,
         samesite='lax'
     )
