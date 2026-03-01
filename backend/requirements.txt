@@ -92,6 +92,24 @@ fastar==0.8.0 \
     --hash=sha256:f77c2f2cad76e9dc7b6701297adb1eba87d0485944b416fc2ccf5516c01219a3 \
     --hash=sha256:fb9ee51e5bffe0dab3d3126d3a4fac8d8f7235cedcb4b8e74936087ce1c157f3
     # via fastapi-cloud-cli
+greenlet==3.3.2 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64' \
+    --hash=sha256:18cb1b7337bca281915b3c5d5ae19f4e76d35e1df80f4ad3c1a7be91fadf1082 \
+    --hash=sha256:1fb39a11ee2e4d94be9a76671482be9398560955c9e568550de0224e41104727 \
+    --hash=sha256:20154044d9085151bc309e7689d6f7ba10027f8f5a8c0676ad398b951913d89e \
+    --hash=sha256:2eaf067fc6d886931c7962e8c6bede15d2f01965560f3359b27c80bde2d151f2 \
+    --hash=sha256:63d10328839d1973e5ba35e98cccbca71b232b14051fd957b6f8b6e8e80d0506 \
+    --hash=sha256:8b466dff7a4ffda6ca975979bab80bdadde979e29fc947ac3be4451428d8b0e4 \
+    --hash=sha256:8c4dd0f3997cf2512f7601563cc90dfb8957c0cff1e3a1b23991d4ea1776c492 \
+    --hash=sha256:8d1658d7291f9859beed69a776c10822a0a799bc4bfe1bd4272bb60e62507dab \
+    --hash=sha256:8e4ab3cfb02993c8cc248ea73d7dae6cec0253e9afa311c9b37e603ca9fad2ce \
+    --hash=sha256:94ad81f0fd3c0c0681a018a976e5c2bd2ca2d9d94895f23e7bb1af4e8af4e2d5 \
+    --hash=sha256:b26b0f4428b871a751968285a1ac9648944cea09807177ac639b030bddebcea4 \
+    --hash=sha256:b8bddc5b73c9720bea487b3bffdb1840fe4e3656fba3bd40aa1489e9f37877ff \
+    --hash=sha256:c04c5e06ec3e022cbfe2cd4a846e1d4e50087444f875ff6d2c2ad8445495cf1a \
+    --hash=sha256:c2e47408e8ce1c6f1ceea0dffcdf6ebb85cc09e55c7af407c99f1112016e45e9 \
+    --hash=sha256:cd6f9e2bbd46321ba3bbb4c8a15794d32960e3b0ae2cc4d49a1a53d314805d71 \
+    --hash=sha256:e26e72bec7ab387ac80caa7496e0f908ff954f31065b0ffc1f8ecb1338b11b54
+    # via sqlalchemy
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
@@ -184,6 +202,7 @@ pydantic==2.12.5 \
     #   fastapi-cloud-cli
     #   pydantic-extra-types
     #   pydantic-settings
+    #   sqlmodel
 pydantic-core==2.41.5 \
     --hash=sha256:0177272f88ab8312479336e1d777f6b124537d47f2123f89cb37e0accea97f90 \
     --hash=sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e \
@@ -311,6 +330,27 @@ shellingham==1.5.4 \
     --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
     --hash=sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de
     # via typer
+sqlalchemy==2.0.47 \
+    --hash=sha256:209467ff73ea1518fe1a5aaed9ba75bb9e33b2666e2553af9ccd13387bf192cb \
+    --hash=sha256:21410f60d5cac1d6bfe360e05bd91b179be4fa0aa6eea6be46054971d277608f \
+    --hash=sha256:5740e2f31b5987ed9619d6912ae5b750c03637f2078850da3002934c9532f172 \
+    --hash=sha256:669837759b84e575407355dcff912835892058aea9b80bd1cb76d6a151cf37f7 \
+    --hash=sha256:819841dd5bb4324c284c09e2874cf96fe6338bfb57a64548d9b81a4e39c9871f \
+    --hash=sha256:b03010a5a5dfe71676bc83f2473ebe082478e32d77e6f082c8fe15a31c3b42a6 \
+    --hash=sha256:c200db1128d72a71dc3c31c24b42eb9fd85b2b3e5a3c9ba1e751c11ac31250ff \
+    --hash=sha256:c72a0b9eb2672d70d112cb149fbaf172d466bc691014c496aaac594f1988e706 \
+    --hash=sha256:c9449f747e50d518c6e1b40cc379e48bfc796453c47b15e627ea901c201e48a6 \
+    --hash=sha256:e255ee44821a7ef45649c43064cf94e74f81f61b4df70547304b97a351e9b7db \
+    --hash=sha256:e2647043599297a1ef10e720cf310846b7f31b6c841fee093d2b09d81215eb93 \
+    --hash=sha256:e3e7feb57b267fe897e492b9721ae46d5c7de6f9e8dee58aacf105dc4e154f3d \
+    --hash=sha256:e78fd9186946afaa287f8a1fe147ead06e5d566b08c0afcb601226e9c7322a64 \
+    --hash=sha256:f8e3371aa9024520883a415a09cc20c33cfd3eeccf9e0f4f4c367f940b9cbd44 \
+    --hash=sha256:fb9ac00d03de93acb210e8ec7243fefe3e012515bf5fd2f0898c8dff38bc77a4
+    # via sqlmodel
+sqlmodel==0.0.37 \
+    --hash=sha256:2137a4045ef3fd66a917a7717ada959a1ceb3630d95e1f6aaab39dd2c0aef278 \
+    --hash=sha256:d2c19327175794faf50b1ee31cc966764f55b1dedefc046450bc5741a3d68352
+    # via uclcm
 starlette==0.52.1 \
     --hash=sha256:0029d43eb3d273bc4f83a08720b4912ea4b071087a3b48db01b7c839f7954d74 \
     --hash=sha256:834edd1b0a23167694292e94f597773bc3f89f362be6effee198165a35d62933
@@ -330,6 +370,7 @@ typing-extensions==4.15.0 \
     #   pydantic-core
     #   pydantic-extra-types
     #   rich-toolkit
+    #   sqlalchemy
     #   typing-inspection
 typing-inspection==0.4.2 \
     --hash=sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7 \
@@ -349,6 +390,7 @@ uvicorn==0.41.0 \
     #   fastapi
     #   fastapi-cli
     #   fastapi-cloud-cli
+    #   uclcm
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32' \
     --hash=sha256:297c27d8003520596236bdb2335e6b3f649480bd09e00d1e3a99144b691d2a35 \
     --hash=sha256:37554f70528f60cad66945b885eb01f1bb514f132d92b6eeed1c90fd54ed6289 \
