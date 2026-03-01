@@ -206,7 +206,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         return {"error": "Time not found"}
     
     print(row.time)
-    target_time = row.time + timedelta(minutes=1)
+    target_time = row.time + timedelta(minutes=30)
     time_left = target_time - curr_time
     seconds_left = int(time_left.total_seconds())
 
@@ -240,7 +240,7 @@ async def scan_qrcode(
     
     leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
     leader = session.exec(leader_statement).first()
-    
+
     if not leader:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
