@@ -25,7 +25,7 @@ export default function SuccessPage() {
     const getQrCode = async () => {
         console.log("count1");
         try {
-            const response = await fetch(`${ADDRESS}:8000/qrcode`, {
+            const response = await fetch(`${ADDRESS}/qrcode`, {
                 method: "GET",
                 credentials: "include", 
             });
@@ -48,7 +48,7 @@ export default function SuccessPage() {
     useEffect(() => {
         const getQrCode1 = async () => {
             try {
-                const response = await fetch(`${ADDRESS}:8000/qrcode`, {
+                const response = await fetch(`${ADDRESS}/qrcode`, {
                     method: "GET",
                     credentials: "include", 
                 });

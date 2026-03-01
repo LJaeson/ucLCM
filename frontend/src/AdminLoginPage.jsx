@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
         setError("");
 
         try {
-            const response = await fetch(`${ADDRESS}:8000/admin/login`, {
+            const response = await fetch(`${ADDRESS}/admin/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", // CRITICAL: This allows the cookie to be saved!

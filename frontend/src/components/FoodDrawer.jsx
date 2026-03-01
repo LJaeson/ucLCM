@@ -20,7 +20,7 @@ export default function FoodDrawer() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${ADDRESS}:8000/checkin/food`, {
+      const response = await fetch(`${ADDRESS}/checkin/food`, {
         method: "PATCH",
         credentials: "include", 
       });
@@ -40,7 +40,7 @@ export default function FoodDrawer() {
   useEffect(() => {
     const myFunction = async () =>  {
         try {
-        const response = await fetch(`${ADDRESS}:8000/status/food`, {
+        const response = await fetch(`${ADDRESS}/status/food`, {
             method: "GET",
             credentials: "include", 
         });

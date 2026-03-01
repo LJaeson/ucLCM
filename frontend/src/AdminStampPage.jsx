@@ -24,7 +24,7 @@ export default function AdminStampPage() {
                 }
 
             
-                const response = await fetch(`${ADDRESS}:8000/scan/${qrCodeString}`, {
+                const response = await fetch(`${ADDRESS}/scan/${qrCodeString}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

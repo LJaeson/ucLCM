@@ -73,7 +73,7 @@ export default function CheckinPage({setFinish, setStart}) {
   useEffect(() => {
     const checkExistingSession = async () => {
         try {
-            const response = await fetch(`${ADDRESS}:8000/whoami`, {
+            const response = await fetch(`${ADDRESS}/whoami`, {
                 method: "GET",
                 credentials: "include", 
             });
@@ -119,7 +119,7 @@ export default function CheckinPage({setFinish, setStart}) {
 
 
     try {
-      const response = await fetch(`${ADDRESS}:8000/checkin`, {
+      const response = await fetch(`${ADDRESS}/checkin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
