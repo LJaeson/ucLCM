@@ -1,29 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import "tailwindcss";
 import finishLogo from './assets/finish_logo_v1.webm';
 import FoodDrawer from './components/FoodDrawer';
 
-const ADDRESS = import.meta.env.VITE_ADDRESS
+const ADDRESS = import.meta.env.VITE_ADDRESS;
 
 export default function SuccessPage() {
-    // for the qrcode
     const [videoDone, setVideoDone] = useState(false);
     const [fadeIn, setFadeIn] = useState(false);
     const [restTime, setRestTime] = useState(null);
     const [qrcode, setQrcode] = useState("");
-    // const [drawerFade, setDrawerFade] = useState(false);
 
     const formatTime = (totalSeconds) => {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        
-        // padStart adds a leading zero if the number is less than 10
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
-    const getQrCode = async () => {
-        console.log("count1");
+    // 1. One single, reusable fetch function wrapped in useCallback
+    const fetchQrStatus = useCallback(async () => {
         try {
             const response = await fetch(`${ADDRESS}/qrcode`, {
                 method: "GET",
@@ -34,72 +30,51 @@ export default function SuccessPage() {
                 const data = await response.json();
                 
                 if (!data.is_time) {
-                    setRestTime(data.rest_time)
+                    setRestTime(data.rest_time);
                 } else {
-                    setQrcode(data.qrcode)
+                    setQrcode(data.qrcode);
                 }
             }
         } catch (error) {
-            console.error("Could not check session:", error);
+            console.error("Could not fetch QR status:", error);
         }
-        console.log(qrcode);
-    }
-
-    useEffect(() => {
-        const getQrCode1 = async () => {
-            try {
-                const response = await fetch(`${ADDRESS}/qrcode`, {
-                    method: "GET",
-                    credentials: "include", 
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (!data.is_time) {
-                        setRestTime(data.rest_time)
-                    } else {
-                        setQrcode(data.qrcode)
-                    }
-                }
-            } catch (error) {
-                console.error("Could not check session:", error);
-            }
-        }
-        getQrCode1();
     }, []);
 
+    // 2. Fetch immediately when the page loads
+    useEffect(() => {
+        const loadInitialData = async () => {
+            await fetchQrStatus();
+        };
+
+        loadInitialData();
+    }, [fetchQrStatus]);
+
+    // 3. Clean, recursive setTimeout for the countdown
     useEffect(() => {
         // If there is no wait time, do nothing
-        if (restTime <= 0 || restTime === null) return;
+        if (restTime === null || restTime <= 0) return;
 
-        // Start the clock
-        const timerId = setInterval(() => {
-            setRestTime((prevTime) => {
-                if (prevTime <= 1) {
-                    // TIME IS UP! 
-                    clearInterval(timerId);
-                    
-                    // Automatically fetch the QR code now that the wait is over!
-                    getQrCode(); 
-                    
-                    return 0;
-                }
-                return prevTime - 1;
-            });
+        const timerId = setTimeout(() => {
+            if (restTime <= 1) {
+                // TIME IS UP! Fetch the new QR code
+                fetchQrStatus();
+                setRestTime(0);
+            } else {
+                // Tick down by 1 second
+                setRestTime((prev) => prev - 1);
+            }
         }, 1000);
 
-        // Cleanup the timer if the user leaves the page early
-        return () => clearInterval(timerId);
+        // Cleanup if the user leaves the page
+        return () => clearTimeout(timerId);
         
-    }, [restTime]);
+    }, [restTime, fetchQrStatus]);
 
-    //for the video 
+    // 4. Video fade-in logic
     useEffect(() => {
         const timer = setTimeout(() => setFadeIn(true), 50);
         return () => clearTimeout(timer);
     }, []);
-
 
     return (
         <div className='w-screen h-screen bg-[#213C51] flex flex-col'>
