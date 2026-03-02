@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "tailwindcss";
 import CheckinPage from './CheckinPage1';
 import CheckinPage2 from './CheckinPage2';
@@ -80,6 +82,8 @@ function Checkin() {
 export default function App() {
   return (
     <>
+      <Analytics/>
+      <SpeedInsights/>
       <BrowserRouter>
         <Routes>
             {/* Default route: The student lands here to check in */}
