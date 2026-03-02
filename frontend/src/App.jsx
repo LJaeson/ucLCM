@@ -82,8 +82,6 @@ function Checkin() {
 export default function App() {
   return (
     <>
-      <Analytics/>
-      <SpeedInsights/>
       <BrowserRouter>
         <Routes>
             {/* Default route: The student lands here to check in */}
@@ -97,6 +95,8 @@ export default function App() {
             <Route path="/admin/stamp/:qrCodeString" element={<AdminStampPage />} />
         </Routes>
       </BrowserRouter>
+      <Analytics/>
+      <SpeedInsights/>
     </>
   );
 }
