@@ -129,7 +129,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         value=new_session_id,
         max_age=60*60*24*365,
         httponly=True,
-        samesite='none',
+        samesite='lax',
         secure=True,
     )
 
@@ -311,7 +311,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
         # max_age=120,
         max_age=60 * 60 * 24 * 200, # 200 days
         httponly=True,
-        samesite='none',
+        samesite='lax',
         secure=True,
     )
     

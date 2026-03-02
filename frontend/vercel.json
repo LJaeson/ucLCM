@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://uclcm-production-b7yv9m.up.railway.app/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
