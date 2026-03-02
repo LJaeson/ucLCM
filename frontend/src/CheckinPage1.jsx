@@ -27,7 +27,7 @@ export default function CheckinPage({setFinish, setStart}) {
     { id: 5, title: 'Commerce'},
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
-    { id: 8, title: 'None specific'},
+    { id: 8, title: 'Academic English'},
   ]
   ///////////////////////end of question list/////////////////////////////
   const handleSingleToggle = (id) => {
@@ -177,7 +177,7 @@ export default function CheckinPage({setFinish, setStart}) {
           <div className='min-h-[7vh]'></div>
           <div className='mb-[-20px]' >
             <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:300ms]">
-              <h3 className="p-1 pb-0 font-medium text-slate-700">Whats your name?</h3>
+              <h3 className="p-1 pb-0 font-medium text-slate-700">What's your name?</h3>
               <div className='p-1.5 pb-[0px]'>
                 <input 
                   type="text" 
@@ -201,7 +201,7 @@ export default function CheckinPage({setFinish, setStart}) {
             </div>
 
             <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:500ms]">
-              <h3 className="p-1 pt-[0px] mt-[-5px] font-medium text-slate-700">Whats your zid?</h3>
+              <h3 className="p-1 pt-[0px] mt-[-5px] font-medium text-slate-700">What's your zID?</h3>
               <div className='p-1.5 pb-[0px]'>
                 <input 
                   type="text" 
@@ -226,7 +226,7 @@ export default function CheckinPage({setFinish, setStart}) {
 
           <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:700ms]">
             <SelectionBox 
-              question={"Program?"}
+              question={"What's your Program?"}
               options =  {q1options}
               selectedIds = {selectedProgram}
               handleToggle = {handleSingleToggle}
