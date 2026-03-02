@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import "tailwindcss";
-import finishLogo from './assets/finish_logo_v1.webm';
+import finishLogoWebm from './assets/finish_logo_v1.webm';
+import finishLogoMov from './assets/finish_logo_v1.mov';
 import FoodDrawer from './components/FoodDrawer';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
@@ -76,6 +77,15 @@ export default function SuccessPage() {
         return () => clearTimeout(timer);
     }, []);
 
+    //if the video didnt pls properly
+    useEffect(() => {
+        const fallbackTimer = setTimeout(() => {
+            setVideoDone(true);
+        }, 3000); 
+        
+        return () => clearTimeout(fallbackTimer);
+    }, []);
+
     return (
         <div className='w-screen h-screen bg-[#213C51] flex flex-col'>
             <div className='self-center max-w-200 w-screen'>
@@ -92,7 +102,8 @@ export default function SuccessPage() {
                             // setTimeout(() => setDrawerFade(true), 10);
                         }}
                     >
-                        <source src={finishLogo} type="video/webm" />
+                        <source src={finishLogoMov} type='video/quicktime; codecs="hvc1"' />
+                        <source src={finishLogoWebm} type="video/webm" />
                         Your browser does not support the video tag.
                     </video>
                 </div>

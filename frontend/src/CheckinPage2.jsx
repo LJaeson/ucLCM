@@ -21,7 +21,7 @@ export default function CheckinPage2({setFinish, setStart}) {
     { id: 5, title: 'Commerce'},
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
-    { id: 8, title: 'None specific'},
+    { id: 8, title: 'Academic English'},
   ]
   ///////////////////////end of question list/////////////////////////////
 
