@@ -65,10 +65,9 @@ export default function CheckinPage2({setFinish, setStart}) {
     
   // This function runs when the button is clicked
   const handleCheckIn = async () => {
-    setIsFinished(true);
 
     try {
-      const response = await fetch(`${ADDRESS}/checkin`, {
+      const response = await fetch(`${ADDRESS}/existcheckin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,6 +81,7 @@ export default function CheckinPage2({setFinish, setStart}) {
       });
 
       if (response.ok) {
+        setIsFinished(true);
         // const data = await response.json();
       }
     } catch (error) {

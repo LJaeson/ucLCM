@@ -63,7 +63,7 @@ app.add_middleware(
         "https://unswcollegestudyclub.com",       
         "http://192.168.0.7:5173",
         f"{ADDRESS}"
-    ], # Update this if Vite port changes
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -138,9 +138,71 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     return {"status": "success"}
 
 
+@app.post("/existcheckin")
+async def existcheckin(data: dict, response: Response ,session: Session = Depends(get_session)):
+
+    # checkin_time = datetime.fromisoformat(data['time'].replace('Z', '+00:00'))
+    checkin_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+
+
+    raw_helps = data.get('helps', [])
+    if isinstance(raw_helps, list):
+        helps_string = ",".join(str(item) for item in raw_helps)
+    else:
+        helps_string = str(raw_helps)
+
+    # if the student zid is already recorded
+    new_session_id = None
+    raw_zid = data['zid']
+    statement = select(User).where(User.zid == raw_zid)
+    record = session.exec(statement).first()
+    if record:
+        print("find record")
+
+    else:
+        new_session_id = str(uuid.uuid4())
+        # generate new session id
+        user_session = User(
+            session_id=new_session_id, 
+            zid=data['zid'], 
+            name=data['name'],
+            program=data.get('program', ''),
+            total_signature=0,
+            current_signature=0
+        )
+        session.add(user_session)
+
+    # Create a new row in the database
+    new_checkin = CheckIn(
+        zid=data['zid'],
+        helps=helps_string,
+        time=checkin_time,
+        signed=False,
+        food=False,
+        signature_token=uuid.uuid4().hex[:8]
+    )
+    session.add(new_checkin)
+
+    session.commit()
+    # session.refresh(new_checkin)
+
+    if new_session_id:
+        response.set_cookie(
+            key="session_id",
+            value=new_session_id,
+            max_age=60*60*24*365,
+            httponly=True,
+            samesite='lax',
+            secure=True,
+        )
+
+    print(f"Success: {new_checkin.zid} saved to DB with ID {new_checkin.id} with sessionid {new_session_id}")
+    return {"status": "success"}
+
 def find_user_by_session(request: Request, session: Session):
     session_id = request.cookies.get("session_id")
     if not session_id:
+        print("unautho")
         return None
     
     statement = select(User).where(User.session_id == session_id)
@@ -349,6 +411,7 @@ async def collect_food(request: Request, session: Session = Depends(get_session)
 async def food_status(request: Request, session: Session = Depends(get_session)):
     user = find_user_by_session(request, session)
     if not user:
+        # print("unautho")
         raise HTTPException(status_code=401, detail="User not found")
 
     curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
