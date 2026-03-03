@@ -87,7 +87,7 @@ export default function SuccessPage() {
     }, []);
 
     return (
-        <div className='w-screen h-screen bg-[#29455b] flex flex-col'>
+        <div className='w-screen h-screen bg-[#213C51] flex flex-col'>
             <div className='self-center max-w-200 w-screen'>
                 <div className='flex w-[100%] justify-center pt-[12vh] pb-[1vh]'>
                     <video 
