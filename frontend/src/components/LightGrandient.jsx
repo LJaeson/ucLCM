@@ -15,7 +15,7 @@ export default function LightGradient() {
 
 
   return (
-    <div className="fixed inset-0 -z-20 overflow-hidden bg-slate-100">
+    <div className="h-dvh fixed inset-0 -z-20 overflow-hidden bg-slate-100">
       {/* Stronger Yellow Blob */}
       <div className={
         wave
