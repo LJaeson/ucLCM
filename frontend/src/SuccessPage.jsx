@@ -10,9 +10,10 @@ const ADDRESS = import.meta.env.VITE_ADDRESS;
 export default function SuccessPage() {
     const [videoDone, setVideoDone] = useState(false);
     const [fadeIn, setFadeIn] = useState(false);
+    const [targetTime, setTargetTime] = useState(null)
     const [restTime, setRestTime] = useState(null);
     const [qrcode, setQrcode] = useState("");
-    const [dummyState, setDummyState] = useState(true);
+    // const [dummyState, setDummyState] = useState(true);
 
     const formatTime = (totalSeconds) => {
         const minutes = Math.floor(totalSeconds / 60);
@@ -33,7 +34,7 @@ export default function SuccessPage() {
                 
                 if (!data.is_time) {
                     const finishTimestamp = Date.now() + (data.rest_time * 1000);
-                    setRestTime(finishTimestamp);
+                    setTargetTime(finishTimestamp);
                     // setRestTime(data.rest_time);
                 } else {
                     setQrcode(data.qrcode);
@@ -56,21 +57,22 @@ export default function SuccessPage() {
     // recursive setTimeout for the countdown
     useEffect(() => {
         // If there is no wait time, do nothing
-        if (!restTime) return;
+        if (!targetTime) return;
 
         const timerId = setInterval(() => {
-            const secondsLeft = Math.max(0, Math.floor((restTime - Date.now()) / 1000));
-            if (secondsLeft === 0) {
+            const secondsLeft = Math.max(0, Math.floor((targetTime - Date.now()) / 1000));
+            if (secondsLeft <= 0) {
                 clearInterval(timerId);
                 fetchQrStatus(); 
-                setRestTime(null);
+                setTargetTime(null);
             } else {
-                setDummyState(prev => !prev); 
+                setRestTime(secondsLeft);
+                // setDummyState(prev => !prev); 
             }
         }, 1000);
 
         return () => clearInterval(timerId);
-    }, [restTime, fetchQrStatus]);
+    }, [targetTime, fetchQrStatus]);
 
     // Video fadein logic
     useEffect(() => {
