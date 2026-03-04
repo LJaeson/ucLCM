@@ -85,7 +85,7 @@ export default function FoodDrawer() {
         <div
         className={`fixed z-40 transition-all ease-in-out flex flex-col items-center justify-center shadow-2xl
             ${isExpanded 
-            ? 'duration-700 w-screen h-screen left-1/2 -translate-x-1/2 bottom-0 translate-y-0 rounded-t-[0vw] cursor-default' 
+            ? 'duration-700 w-screen h-dvh left-1/2 -translate-x-1/2 bottom-0 translate-y-0 rounded-t-[0vw] cursor-default' 
             : waveUp 
                 ? 'duration-[1500ms] w-[200vw] h-[200vw] left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(200vw-15vh)] rounded-t-[100vw] cursor-pointer'
                 : 'duration-[1500ms] w-[200vw] h-[200vw] left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(200vw-13vh)] rounded-t-[100vw] cursor-pointer'
@@ -106,7 +106,7 @@ export default function FoodDrawer() {
         <div
         className={`fixed z-50 transition-all ease-in-out flex flex-col items-center justify-center shadow-2xl
             ${isExpanded 
-            ? 'duration-700 w-screen h-screen left-1/2 -translate-x-1/2 bottom-0 translate-y-0 rounded-t-[0vw] cursor-default' 
+            ? 'duration-700 w-screen h-dvh left-1/2 -translate-x-1/2 bottom-0 translate-y-0 rounded-t-[0vw] cursor-default' 
             : waveUp
                 ? 'duration-[1500ms] w-[200vw] h-[200vw] left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(200vw-10vh)] rounded-t-[100vw] cursor-pointer'
                 : 'duration-[1500ms] w-[200vw] h-[200vw] left-1/2 -translate-x-1/2 bottom-0 translate-y-[calc(200vw-9vh)] rounded-t-[100vw] cursor-pointer'

@@ -31,6 +31,7 @@ export default function AdminLoginPage() {
             }
         } catch (err) {
             setError("Could not connect to server.");
+            console.log(err);
         }
     };
 

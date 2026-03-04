@@ -12,6 +12,7 @@ export default function SuccessPage() {
     const [fadeIn, setFadeIn] = useState(false);
     const [restTime, setRestTime] = useState(null);
     const [qrcode, setQrcode] = useState("");
+    const [dummyState, setDummyState] = useState(true);
 
     const formatTime = (totalSeconds) => {
         const minutes = Math.floor(totalSeconds / 60);
@@ -19,7 +20,7 @@ export default function SuccessPage() {
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
-    // 1. One single, reusable fetch function wrapped in useCallback
+    // used to fetch the qrcode address from the server
     const fetchQrStatus = useCallback(async () => {
         try {
             const response = await fetch(`${ADDRESS}/qrcode`, {
@@ -31,7 +32,9 @@ export default function SuccessPage() {
                 const data = await response.json();
                 
                 if (!data.is_time) {
-                    setRestTime(data.rest_time);
+                    const finishTimestamp = Date.now() + (data.rest_time * 1000);
+                    setRestTime(finishTimestamp);
+                    // setRestTime(data.rest_time);
                 } else {
                     setQrcode(data.qrcode);
                 }
@@ -41,7 +44,7 @@ export default function SuccessPage() {
         }
     }, []);
 
-    // 2. Fetch immediately when the page loads
+    // when the page loads, retry fetch the qrcoe
     useEffect(() => {
         const loadInitialData = async () => {
             await fetchQrStatus();
@@ -50,44 +53,42 @@ export default function SuccessPage() {
         loadInitialData();
     }, [fetchQrStatus]);
 
-    // 3. Clean, recursive setTimeout for the countdown
+    // recursive setTimeout for the countdown
     useEffect(() => {
         // If there is no wait time, do nothing
-        if (restTime === null || restTime <= 0) return;
+        if (!restTime) return;
 
-        const timerId = setTimeout(() => {
-            if (restTime <= 1) {
-                // TIME IS UP! Fetch the new QR code
-                fetchQrStatus();
-                setRestTime(0);
+        const timerId = setInterval(() => {
+            const secondsLeft = Math.max(0, Math.floor((restTime - Date.now()) / 1000));
+            if (secondsLeft === 0) {
+                clearInterval(timerId);
+                fetchQrStatus(); 
+                setRestTime(null);
             } else {
-                // Tick down by 1 second
-                setRestTime((prev) => prev - 1);
+                setDummyState(prev => !prev); 
             }
         }, 1000);
 
-        // Cleanup if the user leaves the page
-        return () => clearTimeout(timerId);
-        
+        return () => clearInterval(timerId);
     }, [restTime, fetchQrStatus]);
 
-    // 4. Video fade-in logic
+    // Video fadein logic
     useEffect(() => {
         const timer = setTimeout(() => setFadeIn(true), 50);
         return () => clearTimeout(timer);
     }, []);
 
-    //if the video didnt pls properly
+    //if the video didnt display properly
     useEffect(() => {
         const fallbackTimer = setTimeout(() => {
             setVideoDone(true);
-        }, 3000); 
+        }, 2500); 
         
         return () => clearTimeout(fallbackTimer);
     }, []);
 
     return (
-        <div className='w-screen h-screen bg-[#213C51] flex flex-col'>
+        <div className='w-screen h-dvh bg-[#213C51] flex flex-col'>
             <div className='self-center max-w-200 w-screen'>
                 <div className='flex w-[100%] justify-center pt-[12vh] pb-[1vh]'>
                     <video 
@@ -108,7 +109,7 @@ export default function SuccessPage() {
                     </video>
                 </div>
 
-                {/* 3. Conditional rendering: Only show this div if videoDone is true */}
+                {/* Only show this div if videoDone is true */}
                 {videoDone && (
                     <div className='flex flex-col items-center'>
                         <h2 className="animate-fade-in font-bebas text-white text-4xl mt-6 tracking-widest">
