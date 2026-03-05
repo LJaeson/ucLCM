@@ -294,17 +294,20 @@ async def scan_qrcode(
     # authorizing
     admin_session_id = request.cookies.get("admin_session_id")
     if not admin_session_id:
+        print("401 no admin token")
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
     leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
     leader = session.exec(leader_statement).first()
 
     if not leader:
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+        print("401 Admin access invalid")
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
     
     curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
     
     if curr_time > leader.expires_at:
+        print("401 Session expired")
         raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
 
     #qrcode checking
@@ -322,8 +325,6 @@ async def scan_qrcode(
 
     row.signed = True
     session.add(row)
-
-    # session.refresh(row)
 
 
     zid = qr_code[:8]

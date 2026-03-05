@@ -40,7 +40,7 @@ export default function Passport() {
     return(
         <>
             <div 
-                className={`fixed z-40 w-24 h-10 bg-transparent flex items-center justify-center cursor-pointer transition-opacity duration-300 rounded-md
+                className={`animate-fade-in fixed z-40 w-24 h-10 bg-transparent flex items-center justify-center cursor-pointer transition-opacity duration-300 rounded-md
                     ${isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}
                 `}
                 onClick={() => setIsExpanded(true)}
@@ -101,7 +101,7 @@ export default function Passport() {
                                 return (
                                     <div 
                                         key={index}
-                                        className={`w-10 h-10 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all duration-500 ease-out opacity-0
+                                        className={`w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-500 ease-out opacity-0
                                             ${isFilled 
                                                 ? 'bg-white scale-100' 
                                                 : 'border-2 border-white/50 bg-transparent'

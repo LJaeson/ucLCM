@@ -95,7 +95,7 @@ export default function SuccessPage() {
             <div className='self-center max-w-200 w-screen'>
                 <div className='flex w-[100%] justify-center pt-[12vh] pb-[1vh]'>
                     <video 
-                        className={`w-[40vw] max-w-md h-auto transition-opacity duration-1200 ease-in-out ${
+                        className={`w-[40vw] max-w-50 h-auto transition-opacity duration-1200 ease-in-out ${
                             fadeIn ? 'opacity-100' : 'opacity-0'
                         }`}
                         autoPlay 
