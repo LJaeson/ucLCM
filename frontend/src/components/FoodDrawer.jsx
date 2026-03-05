@@ -40,7 +40,7 @@ export default function FoodDrawer() {
   useEffect(() => {
     const myFunction = async () =>  {
         try {
-        const response = await fetch(`${ADDRESS}/status/food`, {
+            const response = await fetch(`${ADDRESS}/status/food`, {
             method: "GET",
             credentials: "include", 
         });
@@ -92,7 +92,7 @@ export default function FoodDrawer() {
             }
             ${isConnecting ? 'bg-orange-600/50' : isCollected ? 'bg-red-500/50' : 'bg-[#00bca8]/50'}
             
-            {/* 3. ADD THE OPACITY TOGGLE HERE */}
+            
             ${isMounted ? 'opacity-100' : 'opacity-0'}
         `}
         onClick={() => {

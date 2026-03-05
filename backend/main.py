@@ -16,6 +16,7 @@ if DATABASE_URL.startswith("postgres://"):
 
 ADDRESS = os.getenv("ADDRESS")
 PEERLEADER_PASSWORD = os.getenv("PEERLEADER_PASSWORD")
+IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
 
 class CheckIn(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -62,12 +63,36 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "https://unswcollegestudyclub.com",       
         "http://192.168.0.7:5173",
+        "http://10.4.192.67:5173",
         f"{ADDRESS}"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# helper function
+def find_user_by_session(request: Request, session: Session):
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        print("unautho")
+        return None
+    
+    statement = select(User).where(User.session_id == session_id)
+    return session.exec(statement).first()
+
+def find_record_by_user(user:User, session: Session):
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == user.zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    return session.exec(statement).first() 
+
 
 @app.post("/checkin")
 async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
@@ -130,7 +155,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         max_age=60*60*24*365,
         httponly=True,
         samesite='lax',
-        secure=True,
+        secure=IS_PRODUCTION,
     )
 
 
@@ -193,20 +218,12 @@ async def existcheckin(data: dict, response: Response ,session: Session = Depend
             max_age=60*60*24*365,
             httponly=True,
             samesite='lax',
-            secure=True,
+            secure=IS_PRODUCTION,
         )
 
     print(f"Success: {new_checkin.zid} saved to DB with ID {new_checkin.id} with sessionid {new_session_id}")
     return {"status": "success"}
 
-def find_user_by_session(request: Request, session: Session):
-    session_id = request.cookies.get("session_id")
-    if not session_id:
-        print("unautho")
-        return None
-    
-    statement = select(User).where(User.session_id == session_id)
-    return session.exec(statement).first()
 
 
 @app.get("/whoami")
@@ -217,15 +234,7 @@ async def get_user(request: Request, session: Session = Depends(get_session)):
         return {"recorded": False}
     
     curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
-    statement = (
-        select(CheckIn)
-        .where(
-            CheckIn.zid == user.zid, 
-            func.date(CheckIn.time) == curr_time.date()
-        )
-        .order_by(desc(CheckIn.time))
-    )
-    row = session.exec(statement).first()
+    row = find_record_by_user(user, session)
 
     checkined = False
     if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
@@ -246,28 +255,15 @@ async def get_user(request: Request, session: Session = Depends(get_session)):
 async def get_qrcode(request: Request,  session: Session = Depends(get_session)):
     # user zid
     user = find_user_by_session(request, session)
-
     if not user:
         return {"error": "User not found"}
     
-    zid = user.zid
-
-    # date
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
-    statement = (
-        select(CheckIn)
-        .where(
-            CheckIn.zid == zid, 
-            func.date(CheckIn.time) == curr_time.date()
-        )
-        .order_by(desc(CheckIn.time))
-    )
-    row = session.exec(statement).first()
-
+    row = find_record_by_user(user, session)
     if row is None:
         return {"error": "Time not found"}
     
-    print(row.time)
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    
     target_time = row.time + timedelta(minutes=30)
     time_left = target_time - curr_time
     seconds_left = int(time_left.total_seconds())
@@ -275,7 +271,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
     if seconds_left <= 0:
         date_str = curr_time.strftime("%Y%m%d")
         random_str = row.signature_token
-        scan_url = f"{ADDRESS}/admin/stamp/{zid}{date_str}{random_str}"
+        scan_url = f"{ADDRESS}/admin/stamp/{user.zid}{date_str}{random_str}"
         
         return {
             "is_time": True,
@@ -287,7 +283,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         "rest_time": seconds_left
     }
 
-@app.post("/scan/{qr_code}")
+@app.post("/admin/scan/{qr_code}")
 async def scan_qrcode(
     qr_code: str, 
     request: Request, 
@@ -350,6 +346,8 @@ async def scan_qrcode(
 @app.post("/admin/login")
 async def admin_login(data: dict, response: Response, session: Session = Depends(get_session)):
     if data.get("password") != PEERLEADER_PASSWORD:
+        print(data.get("password"))
+        print(PEERLEADER_PASSWORD)
         raise HTTPException(status_code=401, detail="Invalid admin password")
         
     leader_session_id = str(uuid.uuid4())
@@ -374,7 +372,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
         max_age=60 * 60 * 24 * 200, # 200 days
         httponly=True,
         samesite='lax',
-        secure=True,
+        secure=IS_PRODUCTION,
     )
     
     return {"status": "success", "name": new_leader.name}
@@ -386,17 +384,7 @@ async def collect_food(request: Request, session: Session = Depends(get_session)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
-    statement = (
-        select(CheckIn)
-        .where(
-            CheckIn.zid == user.zid, 
-            func.date(CheckIn.time) == curr_time.date()
-        )
-        .order_by(desc(CheckIn.time))
-    )
-    row = session.exec(statement).first()
-
+    row = find_record_by_user(user, session)
     if not row:
         raise HTTPException(status_code=404, detail="No check-in found for today")
 
@@ -411,21 +399,77 @@ async def collect_food(request: Request, session: Session = Depends(get_session)
 async def food_status(request: Request, session: Session = Depends(get_session)):
     user = find_user_by_session(request, session)
     if not user:
-        # print("unautho")
         raise HTTPException(status_code=401, detail="User not found")
 
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
-    statement = (
-        select(CheckIn)
-        .where(
-            CheckIn.zid == user.zid, 
-            func.date(CheckIn.time) == curr_time.date()
-        )
-        .order_by(desc(CheckIn.time))
-    )
-    row = session.exec(statement).first()
-
+    row = find_record_by_user(user, session)
     if not row:
         raise HTTPException(status_code=404, detail="No check-in found for today")
 
     return {"food": row.food}
+
+@app.get("/status/stamps")
+async def stamps_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if user.current_signature >= 20:
+        row = find_record_by_user(user, session)
+        if not row:
+            return {"error": "user should at least have one record"}
+
+        scan_url = f"{ADDRESS}/admin/redeem/{user.zid}{row.signature_token}"
+        return {"finished": True, "count": user.current_signature, "qrcode": scan_url}
+    else:
+        return {"finished": False, "count": user.current_signature}
+
+@app.post("/admin/redeem/{qr_code}")
+async def admin_redeemscan_qrcode(
+    qr_code: str, 
+    request: Request, 
+    session: Session = Depends(get_session),
+):
+    # authorizing
+    admin_session_id = request.cookies.get("admin_session_id")
+    if not admin_session_id:
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
+    leader = session.exec(leader_statement).first()
+
+    if not leader:
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    
+    if curr_time > leader.expires_at:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+
+    #redeem
+    if len(qr_code) < 16:
+        return {"status": "error", "message": "Invalid QR code format"}
+    
+    signature_token = qr_code[-8:]
+    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
+    row = session.exec(statement).first()
+    if not row:
+        return {"status": "error", "message": "unautho request"}
+
+
+    zid = qr_code[:8]
+    user_statement = select(User).where(User.zid == zid)
+    target_user = session.exec(user_statement).first()
+    if not target_user:
+        return {"status": "error", "message": "User account not found"}
+    
+    if target_user.current_signature < 20:
+        return {"status": "error", "message": f"Not enough stamps, {target_user.name} now has {target_user.current_signature} signatures"}
+    
+    target_user.current_signature -= 20
+    session.add(target_user)
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully redeemed! {target_user.name} now has {target_user.current_signature} signatures."
+    }

@@ -24,7 +24,7 @@ export default function AdminStampPage() {
                 }
 
             
-                const response = await fetch(`${ADDRESS}/admin/scan/${qrCodeString}`, {
+                const response = await fetch(`${ADDRESS}/admin/redeem/${qrCodeString}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export default function AdminStampPage() {
         };
 
         processStamp();
-    }, [qrCodeString]); // Add qrCodeString to the dependency array
+    }, [qrCodeString]);
 
     return (
         <div className="w-screen h-screen bg-[#213C51] flex flex-col items-center justify-center p-6 text-center">
@@ -68,7 +68,7 @@ export default function AdminStampPage() {
                         </div>
                         
                         <h2 className="text-2xl font-black text-gray-800 mb-2 uppercase tracking-wide">
-                            {status === 'success' ? 'Signature Granted' : 
+                            {status === 'success' ? 'Redeemed' : 
                              status === 'warning' ? 'Attention' : 'Error'}
                         </h2>
                         

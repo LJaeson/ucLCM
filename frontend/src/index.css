@@ -54,3 +54,13 @@
   animation: wave 3s ease-in-out infinite;
   animation-delay: 1.5s; 
 }
+
+
+@theme {
+  --animate-pop-in: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.1); }
+    50% { opacity: 1; transform: scale(1.15); } /* The slight over-shoot for the bounce */
+    100% { opacity: 1; transform: scale(1); }
+  }
+}

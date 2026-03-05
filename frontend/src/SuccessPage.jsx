@@ -4,6 +4,7 @@ import "tailwindcss";
 import finishLogoWebm from './assets/finish_logo_v1.webm';
 import finishLogoMov from './assets/finish_logo_v1.mov';
 import FoodDrawer from './components/FoodDrawer';
+import Passport from './components/Passport';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -146,6 +147,9 @@ export default function SuccessPage() {
                 // <div className={`transition-opacity duration-[1200ms] ease-in-out ${drawerFade ? 'opacity-100' : 'opacity-0'}`}>
                     <FoodDrawer/>
                 // </div>
+            )}
+            {videoDone && (
+                    <Passport/>
             )}
         </div>
     );
