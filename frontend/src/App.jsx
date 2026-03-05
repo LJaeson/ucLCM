@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import "tailwindcss";
@@ -87,6 +87,9 @@ export default function App() {
             {/* Default route: The student lands here to check in */}
             <Route path="/" element={<Checkin/>} />
             {/* <Route path="/" element={<CheckinPage2/>} /> */}
+
+            {/* for counting visitor */}
+            <Route path="/scan" element={<Navigate to="/" replace />} />
 
             {/* the admin login page */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
