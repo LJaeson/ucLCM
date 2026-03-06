@@ -17,7 +17,7 @@
 }
 
 @theme {
-  --animate-fly-in: fly-in 1.2s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+  --animate-fly-in: fly-in 1.2s cubic-bezier(0.85, 0, 0.15, 1) both;
 
   @keyframes fly-in {
     0% {
@@ -25,7 +25,7 @@
       opacity: 0.9;
     }
     100% {
-      transform: translateY(0) scale(10); /* Scale 15x to cover entire screen */
+      transform: translateY(0) scale(10);
       opacity: 1;
     }
   }
