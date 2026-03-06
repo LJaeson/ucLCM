@@ -4,6 +4,7 @@ import SelectionBox from './components/SelectionBox';
 import ParticlesBg from './components/ParticlesBg';
 import LightGradient from './components/LightGrandient';
 import FlyingPentagon from './components/FlyingPentagon';
+import Popup from './components/Popup';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS
 
@@ -35,6 +36,7 @@ export default function CheckinPage2({setFinish, setStart}) {
   const [name, setName] = useState('');
   const [zid, setZid] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -83,9 +85,13 @@ export default function CheckinPage2({setFinish, setStart}) {
       if (response.ok) {
         setIsFinished(true);
         // const data = await response.json();
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.detail || "An unexpected error occurred.");
       }
     } catch (error) {
       console.log(error);
+      setErrorMessage("Network error. Please check your internet connection.");
     }
   };
 
@@ -96,6 +102,9 @@ export default function CheckinPage2({setFinish, setStart}) {
     <div className='w-screen flex justify-center flex-col'>
       {isFinished && <FlyingPentagon setFinish={setFinish} setStart={setStart} />}
       <LightGradient />
+      {errorMessage && (
+        <Popup errorMessage={errorMessage} setErrorMessage={setErrorMessage}/>
+      )}
       <div className='self-center max-w-200 w-screen'>
         <div className="absolute inset-0 -z-10">
           <ParticlesBg />

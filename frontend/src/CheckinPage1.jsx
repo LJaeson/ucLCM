@@ -4,6 +4,7 @@ import SelectionBox from './components/SelectionBox';
 import ParticlesBg from './components/ParticlesBg';
 import LightGradient from './components/LightGrandient';
 import FlyingPentagon from './components/FlyingPentagon';
+import Popup from './components/Popup';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS
 
@@ -48,6 +49,7 @@ export default function CheckinPage({setFinish, setStart}) {
   const [nameError, setNameError] = useState("");
   const [zidError, setZidError] = useState("");
   const [formError, setFormError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Checks the name and updates the error state
   const validateName = (currentName) => {
@@ -79,13 +81,13 @@ export default function CheckinPage({setFinish, setStart}) {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                
-                // auto-fill the states, to be remake
-                if (data.recorded) {
-                  setName(data.name);
-                  setZid(data.zid);
-                }
+              const data = await response.json();
+              
+              // auto-fill the states, to be remake
+              if (data.recorded) {
+                setName(data.name);
+                setZid(data.zid);
+              }
             }
         } catch (error) {
             console.error("Could not check session:", error);
@@ -137,9 +139,13 @@ export default function CheckinPage({setFinish, setStart}) {
       if (response.ok) {
         setIsFinished(true);
         // const data = await response.json();
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.detail || "An unexpected error occurred.");
       }
     } catch (error) {
       console.log(error);
+      setErrorMessage("Network error. Please check your internet connection.");
     }
   };
 
@@ -150,6 +156,9 @@ export default function CheckinPage({setFinish, setStart}) {
     <div className='w-screen flex justify-center flex-col'>
       {isFinished && <FlyingPentagon setFinish={setFinish} setStart={setStart} />}
       <LightGradient />
+      {errorMessage && (
+        <Popup errorMessage={errorMessage} setErrorMessage={setErrorMessage}/>
+      )}
       <div className='self-center max-w-200 w-screen'>
         <div className="absolute inset-0 -z-10">
           <ParticlesBg />

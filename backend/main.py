@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Response, Request, Header, HTTPException
+from fastapi import Depends, FastAPI, Response, Request, Header, HTTPException, status
 import os
 import uuid
 from dotenv import load_dotenv
@@ -72,6 +72,9 @@ app.add_middleware(
 )
 
 # helper function
+def get_current_time():
+    return datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+
 def find_user_by_session(request: Request, session: Session):
     session_id = request.cookies.get("session_id")
     if not session_id:
@@ -81,8 +84,15 @@ def find_user_by_session(request: Request, session: Session):
     statement = select(User).where(User.session_id == session_id)
     return session.exec(statement).first()
 
+def find_user_by_zid(zid: str, session: Session):
+    if not zid:
+        return None
+    
+    statement = select(User).where(User.zid == zid)
+    return session.exec(statement).first()
+
 def find_record_by_user(user:User, session: Session):
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     statement = (
         select(CheckIn)
         .where(
@@ -93,13 +103,25 @@ def find_record_by_user(user:User, session: Session):
     )
     return session.exec(statement).first() 
 
+def find_record_by_zid(zid:str, session: Session):
+    if not zid:
+        return None
+    curr_time = get_current_time()
+    statement = (
+        select(CheckIn)
+        .where(
+            CheckIn.zid == zid, 
+            func.date(CheckIn.time) == curr_time.date()
+        )
+        .order_by(desc(CheckIn.time))
+    )
+    return session.exec(statement).first() 
+
 
 @app.post("/checkin")
 async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
-
-    # checkin_time = datetime.fromisoformat(data['time'].replace('Z', '+00:00'))
-    checkin_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
-
+    # curr_time
+    curr_time = get_current_time()
 
     raw_helps = data.get('helps', [])
     if isinstance(raw_helps, list):
@@ -107,13 +129,23 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     else:
         helps_string = str(raw_helps)
 
+
+    raw_zid = data['zid']
+    # check if the user already checkin for today
+    row = find_record_by_zid(raw_zid, session)
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        print(f"Failed: {raw_zid} has the record today at this session time")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, 
+            detail="You have already checked in for this session today."
+        )
+
     # if the student zid is already recorded
     new_session_id = str(uuid.uuid4())
-    raw_zid = data['zid']
     statement = select(User).where(User.zid == raw_zid)
     record = session.exec(statement).first()
     if record:
-        print("have record")
+        print(f"have record for {record.zid}")
 
         record.session_id = new_session_id
         record.name = data['name']
@@ -139,7 +171,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         # name=data['name'],
         # program=data.get('program', ''), # .get() prevents crashes if missing
         helps=helps_string,
-        time=checkin_time,
+        time=curr_time,
         signed=False,
         food=False,
         signature_token=uuid.uuid4().hex[:8]
@@ -165,9 +197,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
 
 @app.post("/existcheckin")
 async def existcheckin(data: dict, response: Response ,session: Session = Depends(get_session)):
-
-    # checkin_time = datetime.fromisoformat(data['time'].replace('Z', '+00:00'))
-    checkin_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
 
 
     raw_helps = data.get('helps', [])
@@ -176,32 +206,32 @@ async def existcheckin(data: dict, response: Response ,session: Session = Depend
     else:
         helps_string = str(raw_helps)
 
+
+    raw_zid = data['zid']
+
+    # check if the user already checkin for today
+    row = find_record_by_zid(raw_zid, session)
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        print(f"Failed: {raw_zid} has the record today at this session time")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, 
+            detail="You have already checked in for this session today."
+        )
+
     # if the student zid is already recorded
     new_session_id = None
-    raw_zid = data['zid']
-    statement = select(User).where(User.zid == raw_zid)
-    record = session.exec(statement).first()
-    if record:
-        print("find record")
-
-    else:
-        new_session_id = str(uuid.uuid4())
-        # generate new session id
-        user_session = User(
-            session_id=new_session_id, 
-            zid=data['zid'], 
-            name=data['name'],
-            program=data.get('program', ''),
-            total_signature=0,
-            current_signature=0
+    user = find_user_by_zid(raw_zid, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="invalid session id, try clear cookies and try again!"
         )
-        session.add(user_session)
 
     # Create a new row in the database
     new_checkin = CheckIn(
         zid=data['zid'],
         helps=helps_string,
-        time=checkin_time,
+        time=curr_time,
         signed=False,
         food=False,
         signature_token=uuid.uuid4().hex[:8]
@@ -233,7 +263,7 @@ async def get_user(request: Request, session: Session = Depends(get_session)):
     if not user:
         return {"recorded": False}
     
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     row = find_record_by_user(user, session)
 
     checkined = False
@@ -262,7 +292,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
     if row is None:
         return {"error": "Time not found"}
     
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     
     target_time = row.time + timedelta(minutes=30)
     time_left = target_time - curr_time
@@ -304,7 +334,7 @@ async def scan_qrcode(
         print("401 Admin access invalid")
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
     
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     
     if curr_time > leader.expires_at:
         print("401 Session expired")
@@ -353,7 +383,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
         
     leader_session_id = str(uuid.uuid4())
 
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     
     expiration_time = curr_time + timedelta(seconds=60 * 60 * 24 * 200)
     
@@ -441,7 +471,7 @@ async def admin_redeemscan_qrcode(
     if not leader:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
     
-    curr_time = datetime.now(ZoneInfo("Australia/Sydney")).replace(tzinfo=None)
+    curr_time = get_current_time()
     
     if curr_time > leader.expires_at:
         raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
