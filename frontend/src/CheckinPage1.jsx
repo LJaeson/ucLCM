@@ -184,7 +184,7 @@ export default function CheckinPage({setFinish, setStart}) {
             <h2 className="font-['Bebas_Neue'] text-center text-4xl font-medium">Welcome to Study Club!</h2>
           </div>
           <div className='min-h-[7vh]'></div>
-          <div className='mb-[-20px]' >
+          <div className='mb-[-20px] font-["Zain"]' >
             <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:300ms]">
               <h3 className="p-1 pb-0 font-medium text-slate-700">What's your name?</h3>
               <div className='p-1.5 pb-[0px]'>
@@ -233,7 +233,7 @@ export default function CheckinPage({setFinish, setStart}) {
             </div>
           </div>
 
-          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:700ms]">
+          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:700ms] font-['Zain']">
             <SelectionBox 
               question={"What's your Program?"}
               options =  {q1options}
@@ -250,7 +250,7 @@ export default function CheckinPage({setFinish, setStart}) {
           </div>
 
           
-          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:900ms]">
+          <div className="animate-fade-in [animation-fill-mode:both] [animation-delay:900ms] font-['Zain']">
             <SelectionBox 
               question={"How can we help you today?"}
               options =  {q2options}
@@ -261,17 +261,17 @@ export default function CheckinPage({setFinish, setStart}) {
           </div>
         </div>
         
-        <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms]'>
+        <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms] font-["Zain"]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-2 rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500"
+            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500"
           >
             Check in
           </button>
         </div>
 
-        <div className='self-center flex items-center justify-center pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1300ms]'>
-          <p className='text-sm'><mark className='opacity-30 bg-transparent'>Made with </mark>❤️</p>
+        <div className='self-center flex items-center justify-center pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1300ms] font-["Zain"]'>
+          <p className='text-[8px]'><mark className='opacity-30 bg-transparent'>We use cookies! Made with </mark><a href='https://www.youtube.com/watch?v=yL1z1ZHD0K4' target="_blank" rel="noopener noreferrer">❤️</a></p>
         </div>
 
       </div>

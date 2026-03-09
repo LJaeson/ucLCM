@@ -120,7 +120,7 @@ export default function SuccessPage() {
                         </h2>
 
                         {restTime > 0 ? (
-                            <p className="mt-4 animate-fade-in text-white align-middle px-5 font-['Nunito',_sans-serif] font-medium text-sm">
+                            <p className="mt-4 animate-fade-in text-white align-middle px-5 font-['Zain'] font-medium text-sm">
                                 Please come back to us after <span>{formatTime(restTime)}</span> to get a stamp.
                             </p>
                         ) : qrcode ? (

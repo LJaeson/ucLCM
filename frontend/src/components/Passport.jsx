@@ -45,7 +45,7 @@ export default function Passport() {
                 `}
                 onClick={() => setIsExpanded(true)}
             >
-                <div className="font-['Nunito',_sans-serif] text-sm tracking-widest font-medium text-white">
+                <div className="font-['Zain'] text-sm tracking-widest font-medium text-white">
                     Passport
                 </div>
             </div>
@@ -89,7 +89,7 @@ export default function Passport() {
                     </div>
                     :
                     <div className='flex flex-col gap-8 items-center'>
-                        <div className="text-white font-['Nunito',_sans-serif] font-medium text-lg tracking-wide">
+                        <div className="text-white font-['Zain'] font-medium text-lg tracking-wide">
                             Collect 20 stamps to redeem a prize!
                         </div>
 

@@ -45,6 +45,13 @@ class Admin(SQLModel, table=True):
     role: str
     expires_at: datetime
 
+class Feedback(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    zid: str
+    message: str
+    message2: str
+    time: datetime
+
 engine = create_engine(DATABASE_URL)
 
 SQLModel.metadata.create_all(engine)

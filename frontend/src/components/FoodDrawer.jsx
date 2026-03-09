@@ -132,7 +132,7 @@ export default function FoodDrawer() {
                     // 4. Swap the old click logic for your new fetch function!
                     onClick={handleCollectFood}
                     disabled={isSubmitting}
-                    className={`w-40 h-40 bg-white rounded-full font-bold text-2xl shadow-[0_0_40px_rgba(0,0,0,0.3)] transition-transform ${
+                    className={`w-40 h-40 bg-white rounded-full font-bold text-3xl shadow-[0_0_40px_rgba(0,0,0,0.3)] font-['Zain'] transition-transform ${
                     isSubmitting ? 'text-gray-400 cursor-not-allowed scale-95' : 'text-[#213C51] hover:scale-105'
                     }`}
                 >
@@ -144,6 +144,12 @@ export default function FoodDrawer() {
                 <h2 className="text-white font-['Bebas_Neue'] text-5xl tracking-wider animate-fade-in [animation-duration:800ms]">
                     You have collected food!
                 </h2>
+                )}
+
+                {isExpanded && !isCollected && (
+                    <p className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[95vw] text-center text-white font-['Zain'] text-sm tracking-widest animate-fade-in [animation-duration:800ms]">
+                        Do you know? We provide you FREE FOOD while you are studying!!!!!
+                    </p>
                 )}
                 
                 {isExpanded && (
