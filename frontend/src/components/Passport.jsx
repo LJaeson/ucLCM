@@ -46,7 +46,7 @@ export default function Passport() {
                 onClick={() => setIsExpanded(true)}
             >
                 <div className="font-['Zain'] text-sm tracking-widest font-medium text-white">
-                    Passport
+                    Study Opal
                 </div>
             </div>
 

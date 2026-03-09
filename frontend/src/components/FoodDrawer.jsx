@@ -148,7 +148,7 @@ export default function FoodDrawer() {
 
                 {isExpanded && !isCollected && (
                     <p className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[95vw] text-center text-white font-['Zain'] text-sm tracking-widest animate-fade-in [animation-duration:800ms]">
-                        Do you know? We provide you FREE FOOD while you are studying!!!!!
+                        We offer free study food! The supply is small, but the love is big!!!
                     </p>
                 )}
                 

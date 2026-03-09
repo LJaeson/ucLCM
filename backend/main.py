@@ -37,6 +37,7 @@ class User(SQLModel, table=True):
     program: int
     total_signature: int
     current_signature: int
+    total_attendance: int
 
 class Admin(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -50,6 +51,7 @@ class Feedback(SQLModel, table=True):
     zid: str
     message: str
     message2: str
+    message3: str
     time: datetime
 
 engine = create_engine(DATABASE_URL)
@@ -157,6 +159,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         record.session_id = new_session_id
         record.name = data['name']
         record.program = data.get('program', '')
+        record.total_attendance += 1
 
         session.add(record)
 
@@ -168,7 +171,8 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
             name=data['name'],
             program=data.get('program', ''),
             total_signature=0,
-            current_signature=0
+            current_signature=0,
+            total_attendance=1
         )
         session.add(user_session)
 
@@ -206,7 +210,6 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
 async def existcheckin(data: dict, response: Response ,session: Session = Depends(get_session)):
     curr_time = get_current_time()
 
-
     raw_helps = data.get('helps', [])
     if isinstance(raw_helps, list):
         helps_string = ",".join(str(item) for item in raw_helps)
@@ -233,6 +236,10 @@ async def existcheckin(data: dict, response: Response ,session: Session = Depend
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="invalid session id, try clear cookies and try again!"
         )
+    
+    user.total_attendance+= 1
+
+    session.add(user)
 
     # Create a new row in the database
     new_checkin = CheckIn(
