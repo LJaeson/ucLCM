@@ -9,6 +9,7 @@ import SuccessPage from './SuccessPage';
 import AdminStampPage from './AdminStampPage';
 import AdminLoginPage from './AdminLoginPage';
 import AdminRedeemPage from './AdminRedeemPage';
+import AdminLoginSuccessPage from './AdminLoginSuccessPage';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -100,6 +101,9 @@ export default function App() {
 
             {/* The secret admin .  */}
             <Route path="/admin/redeem/:qrCodeString" element={<AdminRedeemPage />} />
+
+            {/* admin login success page */}
+            <Route path="/admin/dashboard" element={<AdminLoginSuccessPage/>} />
         </Routes>
       </BrowserRouter>
       <Analytics/>
