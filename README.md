@@ -16,7 +16,7 @@ We just handled over 100 users' checkin in the first 24 hours of deployment, wit
 [![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](https://unswcollegestudyclub.com/demo)
 
 Here is a simple demo of student interface:
-![Student Demo](/frontend/public/student_demo.png)
+![Student Demo](/frontend/public/student_demo.gif)
 ### Features 
 
 * Digital attendance and location-based check-ins for study club.

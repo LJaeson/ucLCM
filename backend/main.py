@@ -73,6 +73,7 @@ app.add_middleware(
         "https://unswcollegestudyclub.com",       
         "http://192.168.0.7:5173",
         "http://10.4.192.67:5173",
+        "https://azure.jaesonliang.com",
         f"{ADDRESS}"
     ],
     allow_credentials=True,
