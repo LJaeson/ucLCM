@@ -1,30 +1,37 @@
 
-![Logo](.frontend/public/studyClub.svg)
+<p align="center">
+  <img src="frontend/public/studyClub.svg" alt="Logo" width="200">
+</p>
 
-## ucLCMS
+# ucLCMS
 
 LCMS, stands for Loyalty Check-in Management System, is an integrated student utility platform designed specifically for the UNSW College ecosystem. It simplifies student daily life by consolidating study club services into a single, user-friendly interface.
 
-### Demo 
+## Demo 
 
-![App Screenshot](/frontend/public/visitor_number.png)
+<p align="center">
+  <img src="/frontend/public/visitor_number.png" alt="Data Screenshot" width="700">
+</p>
 
 We just handled over 100 users' checkin in the first 24 hours of deployment, with anti-bot feature enabled!
 
----
+___
 \
 [![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](https://unswcollegestudyclub.com/demo)
 
 Here is a simple demo of student interface:
-![Student Demo](/frontend/public/student_demo.gif)
-### Features 
+<p align="center">
+  <img src="frontend/public/student_demo.gif" alt="Student Demo" height="500">
+</p>
+
+## Features 
 
 * Digital attendance and location-based check-ins for study club.
 * "Grab Food" Integration: A clean streamlined system for students to claim food during the session.
 * "Opal Study": Integrated monitoring for study sessions, helping students track their academic engagement and loyalty rewards.
 * Pretty css feels like drinking smoothy (I just learned how to make banana milk smoothy🍌🥤)
 
-### System Architecture 
+## System Architecture 
 
 * Frontend: Built with React and Vite for a fast, responsive mobile-first student experience
 
@@ -47,7 +54,7 @@ Here is a simple demo of student interface:
 ```
 
 3. Copy and paste the following template into your .env file:
-```copy
+```env
 # Database configuration
 DATABASE_URL=sqlite:///./checkins.db
 
@@ -79,7 +86,7 @@ ENVIRONMENT="coding"
 ```
 
 3. Copy and paste the following template into your .env file:
-```copy
+```env
 # Backend Address (Update this based on your current network IP)
 # You can check with Mac: option key+click wifi icon -> IP Address
 # Change the default port number if needed
