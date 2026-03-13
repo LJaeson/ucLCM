@@ -198,7 +198,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         value=new_session_id,
         max_age=60*60*24*365,
         httponly=True,
-        samesite='lax',
+        samesite='none',
         secure=IS_PRODUCTION,
     )
 
@@ -262,7 +262,7 @@ async def existcheckin(data: dict, response: Response ,session: Session = Depend
             value=new_session_id,
             max_age=60*60*24*365,
             httponly=True,
-            samesite='lax',
+            samesite='none',
             secure=IS_PRODUCTION,
         )
 
@@ -417,7 +417,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
         # max_age=120,
         max_age=60 * 60 * 24 * 200, # 200 days
         httponly=True,
-        samesite='lax',
+        samesite='none',
         secure=IS_PRODUCTION,
     )
     
