@@ -7,10 +7,13 @@
     {
       "source": "/(.*)",
       "destination": "/index.html"
-    },
+    }
+  ],
+  "redirects": [
     {
       "source": "/demo",
-      "destination": "https://azure.jaesonliang.com/"
+      "destination": "https://azure.jaesonliang.com/",
+      "permanent": true
     }
   ]
 }
