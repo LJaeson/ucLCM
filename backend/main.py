@@ -18,6 +18,24 @@ ADDRESS = os.getenv("ADDRESS")
 PEERLEADER_PASSWORD = os.getenv("PEERLEADER_PASSWORD")
 IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
 
+PROGRAM_LABELS = {
+    1: "Diploma",
+    2: "Foundation Studies",
+    3: "Academic English Program",
+    4: "Pre-Masters",
+}
+
+HELP_TOPIC_LABELS = {
+    "1": "Maths",
+    "2": "Physics",
+    "3": "Computing",
+    "4": "Engineering",
+    "5": "Commerce",
+    "6": "Chemistry",
+    "7": "Biology",
+    "8": "Academic English",
+}
+
 class CheckIn(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     zid: str
@@ -126,6 +144,26 @@ def find_record_by_zid(zid:str, session: Session):
         .order_by(desc(CheckIn.time))
     )
     return session.exec(statement).first() 
+
+
+def validate_admin_session(request: Request, session: Session, role: str):
+    admin_session_id = request.cookies.get("admin_session_id")
+    if not admin_session_id:
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+
+    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
+    leader = session.exec(leader_statement).first()
+    if not leader:
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
+
+    curr_time = get_current_time()
+    if curr_time > leader.expires_at:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    
+    if leader.role != role:
+        raise HTTPException(status_code=401, detail="Unauthorized: Insufficient permissions")
+
+    return leader
 
 
 @app.post("/checkin")
@@ -422,6 +460,100 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
     )
     
     return {"status": "success", "name": new_leader.name}
+
+
+@app.get("/admin/analytics")
+async def admin_analytics(request: Request, session: Session = Depends(get_session)):
+    validate_admin_session(request, session, "Admin")
+
+    users = session.exec(select(User)).all()
+    checkins = session.exec(select(CheckIn)).all()
+
+    program_by_zid = {user.zid: PROGRAM_LABELS.get(user.program, "Unknown") for user in users}
+
+    attendance_by_program: dict[str, int] = {}
+    attendance_by_month: dict[str, int] = {}
+    help_topic_counts: dict[str, int] = {}
+
+    for checkin in checkins:
+        month_key = checkin.time.strftime("%Y-%m")
+        attendance_by_month[month_key] = attendance_by_month.get(month_key, 0) + 1
+
+        program_name = program_by_zid.get(checkin.zid, "Unknown")
+        attendance_by_program[program_name] = attendance_by_program.get(program_name, 0) + 1
+
+        helps_value = (checkin.helps or "").strip()
+        if not helps_value:
+            help_topic_counts["No specific"] = help_topic_counts.get("No specific", 0) + 1
+        else:
+            topic_ids = [part.strip() for part in helps_value.split(",") if part.strip()]
+            if not topic_ids:
+                help_topic_counts["No specific"] = help_topic_counts.get("No specific", 0) + 1
+            for topic_id in topic_ids:
+                topic_name = HELP_TOPIC_LABELS.get(topic_id, "Other")
+                help_topic_counts[topic_name] = help_topic_counts.get(topic_name, 0) + 1
+
+    frequency_once = 0
+    frequency_two_to_five = 0
+    frequency_more_than_five = 0
+    for user in users:
+        total_attendance = user.total_attendance or 0
+        if total_attendance <= 1:
+            frequency_once += 1
+        elif total_attendance <= 5:
+            frequency_two_to_five += 1
+        else:
+            frequency_more_than_five += 1
+
+    sorted_months = sorted(attendance_by_month.items())
+    last_twelve_months = sorted_months[-12:]
+    attendance_by_month_result = [
+        {"month": month, "count": count}
+        for month, count in last_twelve_months
+    ]
+
+    attendance_by_program_result = [
+        {"name": name, "count": count}
+        for name, count in sorted(attendance_by_program.items(), key=lambda item: item[1], reverse=True)
+    ]
+
+    help_topics_result = [
+        {"name": name, "count": count}
+        for name, count in sorted(help_topic_counts.items(), key=lambda item: item[1], reverse=True)
+    ]
+
+    top_attendees_result = [
+        {
+            "zid": user.zid,
+            "name": user.name,
+            "sessions": user.total_attendance,
+        }
+        for user in sorted(users, key=lambda item: item.total_attendance, reverse=True)[:15]
+    ]
+
+    total_checkins = len(checkins)
+    total_students = len(users)
+    total_signed = sum(1 for checkin in checkins if checkin.signed)
+    total_food_collected = sum(1 for checkin in checkins if checkin.food)
+
+    return {
+        "summary": {
+            "total_checkins": total_checkins,
+            "total_students": total_students,
+            "total_signed": total_signed,
+            "total_food_collected": total_food_collected,
+            "average_attendance_per_student": round(total_checkins / total_students, 2) if total_students > 0 else 0,
+        },
+        "attendance_by_month": attendance_by_month_result,
+        "attendance_by_program": attendance_by_program_result,
+        "attendance_frequency": [
+            {"name": "Once", "count": frequency_once},
+            {"name": "2-5 times", "count": frequency_two_to_five},
+            {"name": "More than 5 times", "count": frequency_more_than_five},
+        ],
+        "top_attendees": top_attendees_result,
+        "help_topics": help_topics_result,
+    }
 
 
 @app.patch("/checkin/food")

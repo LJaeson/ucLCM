@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
             if (response.ok) {
                 // If login succeeds, send them back to the scanner/dashboard!
                 // For now, we'll just send them to a theoretical dashboard
-                navigate("/admin/dashboard"); 
+                navigate("/admin/success"); 
             } else {
                 setError("Incorrect password.");
             }
