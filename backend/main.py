@@ -161,7 +161,7 @@ def validate_admin_session(request: Request, session: Session, role: str):
         raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
     
     if leader.role != role:
-        raise HTTPException(status_code=401, detail="Unauthorized: Insufficient permissions")
+        raise HTTPException(status_code=403, detail="Unauthorized: Insufficient permissions")
 
     return leader
 
