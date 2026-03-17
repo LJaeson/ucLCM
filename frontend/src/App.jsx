@@ -10,6 +10,7 @@ import AdminStampPage from './AdminStampPage';
 import AdminLoginPage from './AdminLoginPage';
 import AdminRedeemPage from './AdminRedeemPage';
 import AdminLoginSuccessPage from './AdminLoginSuccessPage';
+import AdminDashboardPage from './AdminDashboardPage';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -103,7 +104,10 @@ export default function App() {
             <Route path="/admin/redeem/:qrCodeString" element={<AdminRedeemPage />} />
 
             {/* admin login success page */}
-            <Route path="/admin/dashboard" element={<AdminLoginSuccessPage/>} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage/>} />
+
+            {/* admin login success page */}
+            <Route path="/admin/success" element={<AdminLoginSuccessPage/>} />
         </Routes>
       </BrowserRouter>
       <Analytics/>

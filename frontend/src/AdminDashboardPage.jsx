@@ -1,0 +1,186 @@
+import { useEffect, useMemo, useState } from 'react';
+
+const ADDRESS = import.meta.env.VITE_ADDRESS;
+
+function MetricCard({ label, value }) {
+    return (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
+        </div>
+    );
+}
+
+function HorizontalBarChart({ title, data, maxItems = 8 }) {
+    const displayData = useMemo(() => data.slice(0, maxItems), [data, maxItems]);
+    const maxValue = useMemo(() => Math.max(...displayData.map((item) => item.count), 1), [displayData]);
+
+    return (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+            <div className="mt-4 space-y-3">
+                {displayData.length === 0 ? (
+                    <p className="text-sm text-slate-500">No data available.</p>
+                ) : (
+                    displayData.map((item) => (
+                        <div key={item.name}>
+                            <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                                <span className="truncate pr-2">{item.name}</span>
+                                <span>{item.count}</span>
+                            </div>
+                            <div className="h-2 rounded bg-slate-100">
+                                <div
+                                    className="h-2 rounded bg-sky-600"
+                                    style={{ width: `${Math.max((item.count / maxValue) * 100, 2)}%` }}
+                                />
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
+
+function VerticalBars({ title, data }) {
+    const maxValue = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
+
+    return (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+            {data.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">No data available.</p>
+            ) : (
+                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 xl:grid-cols-12">
+                    {data.map((item) => (
+                        <div key={item.month} className="flex flex-col items-center justify-end">
+                            <div className="mb-2 text-[10px] text-slate-500">{item.count}</div>
+                            <div className="flex h-36 w-full items-end rounded bg-slate-100 px-1">
+                                <div
+                                    className="w-full rounded bg-sky-600"
+                                    style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
+                                />
+                            </div>
+                            <div className="mt-2 text-[10px] text-slate-600">{item.month.slice(5)}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function AdminDashboardPage() {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [analytics, setAnalytics] = useState(null);
+
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                setLoading(true);
+                setError('');
+                const response = await fetch(`${ADDRESS}/admin/analytics`, {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Your admin session has expired. Please log in again.');
+                    }
+                    throw new Error('Failed to load analytics data.');
+                }
+
+                const data = await response.json();
+                setAnalytics(data);
+            } catch (fetchError) {
+                setError(fetchError.message || 'Could not load analytics.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAnalytics();
+    }, []);
+
+    return (
+        <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-8">
+            <div className="mx-auto max-w-7xl">
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+                        <p className="mt-1 text-sm text-slate-600">Attendance and support insights from your database</p>
+                    </div>
+                </div>
+
+                {loading && <p className="text-sm text-slate-600">Loading analytics...</p>}
+
+                {!loading && error && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        {error}
+                    </div>
+                )}
+
+                {!loading && !error && analytics && (
+                    <div className="space-y-6">
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                            <MetricCard label="Total Check-ins" value={analytics.summary.total_checkins} />
+                            <MetricCard label="Unique Students" value={analytics.summary.total_students} />
+                            <MetricCard label="Signed Sessions" value={analytics.summary.total_signed} />
+                            <MetricCard label="Food Collected" value={analytics.summary.total_food_collected} />
+                            <MetricCard label="Avg Check-ins / Student" value={analytics.summary.average_attendance_per_student} />
+                        </div>
+
+                        <VerticalBars title="Attendance by Month" data={analytics.attendance_by_month || []} />
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <HorizontalBarChart
+                                title="Attendance by Program"
+                                data={analytics.attendance_by_program || []}
+                                maxItems={6}
+                            />
+                            <HorizontalBarChart
+                                title="Attendance Frequency"
+                                data={analytics.attendance_frequency || []}
+                                maxItems={3}
+                            />
+                        </div>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <HorizontalBarChart
+                                title="Top Help Topics"
+                                data={analytics.help_topics || []}
+                                maxItems={10}
+                            />
+
+                            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <h3 className="text-sm font-semibold text-slate-800">Top Attendees</h3>
+                                <div className="mt-4 overflow-x-auto">
+                                    <table className="min-w-full text-left text-sm">
+                                        <thead>
+                                            <tr className="border-b border-slate-100 text-slate-500">
+                                                <th className="py-2 pr-4 font-medium">zID</th>
+                                                <th className="py-2 pr-4 font-medium">Name</th>
+                                                <th className="py-2 font-medium">Sessions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(analytics.top_attendees || []).map((person) => (
+                                                <tr key={person.zid} className="border-b border-slate-50">
+                                                    <td className="py-2 pr-4 text-slate-700">{person.zid}</td>
+                                                    <td className="py-2 pr-4 text-slate-700">{person.name}</td>
+                                                    <td className="py-2 font-semibold text-slate-900">{person.sessions}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
