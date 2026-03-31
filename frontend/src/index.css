@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Honk:MORF@15&display=swap'); */
 @import url('https://fonts.googleapis.com/css2?family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap');
 @import "tailwindcss";
 
@@ -39,6 +40,19 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+}
+
+/* join us in study club */
+@keyframes colorChange {
+  0%, 100% { color: #03AED2; } /* Red */
+  25% { color: #F8DE22; }      /* Blue */
+  50% { color: #F45B26; }      /* Green */
+  75% { color: #D12052; }      /* Amber */
+}
+
+/* 2. Map it to a Tailwind theme variable */
+@theme {
+  --animate-slow-color: colorChange 3s linear infinite;
 }
 
 @keyframes wave {

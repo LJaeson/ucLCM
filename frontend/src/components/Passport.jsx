@@ -40,12 +40,12 @@ export default function Passport() {
     return(
         <>
             <div 
-                className={`animate-fade-in fixed z-40 w-24 h-10 bg-transparent flex items-center justify-center cursor-pointer transition-opacity duration-300 rounded-md
+                className={`animate-fade-in fixed z-40 w-30 h-10 bg-transparent flex items-center justify-center cursor-pointer transition-opacity duration-300 rounded-md
                     ${isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}
                 `}
                 onClick={() => setIsExpanded(true)}
             >
-                <div className="font-['Zain'] text-sm tracking-widest font-medium text-white">
+                <div className="font-['Zain'] text-sm tracking-widest font-medium text-white p-2 pt-5">
                     Study Opal
                 </div>
             </div>

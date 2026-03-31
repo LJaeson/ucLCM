@@ -139,6 +139,15 @@ export default function SuccessPage() {
                             <p className="mt-4 animate-pulse text-white">Checking your status...</p>
                         )}
 
+                        <a 
+                            href="https://discord.gg/tnAkbXaEQ6" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className='animate-fade-in font-["Zain"] animate-slow-color text-medium underline mt-4'
+                        >
+                            join us in discord!
+                        </a>
+
                     </div>
                 )}
             </div>
