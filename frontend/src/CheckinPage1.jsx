@@ -37,6 +37,7 @@ export default function CheckinPage({setFinish, setStart}) {
   };
 
   const handleMultiToggle = (id) => {
+    setHelpsError("");
     setselectedHelps(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
@@ -49,6 +50,7 @@ export default function CheckinPage({setFinish, setStart}) {
   const [nameError, setNameError] = useState("");
   const [zidError, setZidError] = useState("");
   const [formError, setFormError] = useState("");
+  const [helpsError, setHelpsError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   // Checks the name and updates the error state
@@ -107,6 +109,10 @@ export default function CheckinPage({setFinish, setStart}) {
 
     if (!selectedProgram) {
       return setFormError("Please select your program.");
+    }
+
+    if (selectedHelps.length === 0) {
+      return setHelpsError("Please select at least one we can help with.");
     }
 
     if (!isNameValid || !isZidValid) {
@@ -258,6 +264,12 @@ export default function CheckinPage({setFinish, setStart}) {
               handleToggle = {handleMultiToggle}
               isMulti = {true}
             />
+
+            {helpsError && (
+              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 opacity-100`}>
+                  {helpsError}
+              </p>
+            )}
           </div>
         </div>
         

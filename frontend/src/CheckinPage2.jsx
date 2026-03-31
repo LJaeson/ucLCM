@@ -11,6 +11,7 @@ const ADDRESS = import.meta.env.VITE_ADDRESS
 
 export default function CheckinPage2({setFinish, setStart}) {
   const [selectedHelps, setselectedHelps] = useState([])
+  const [helpsError, setHelpsError] = useState("");
 
   ///////////////////////question list/////////////////////////////
 
@@ -27,6 +28,7 @@ export default function CheckinPage2({setFinish, setStart}) {
   ///////////////////////end of question list/////////////////////////////
 
   const handleMultiToggle = (id) => {
+    setHelpsError("");
     setselectedHelps(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
@@ -67,6 +69,9 @@ export default function CheckinPage2({setFinish, setStart}) {
     
   // This function runs when the button is clicked
   const handleCheckIn = async () => {
+      if (selectedHelps.length === 0) {
+      return setHelpsError("Please select at least one we can help with.");
+    }
 
     try {
       const response = await fetch(`${ADDRESS}/existcheckin`, {
@@ -138,6 +143,13 @@ export default function CheckinPage2({setFinish, setStart}) {
                 handleToggle = {handleMultiToggle}
                 isMulti = {true}
             />
+
+            {helpsError && (
+              <p className={`text-red-500 text-sm mt-0.5 ml-2 font-medium transition-opacity duration-150 opacity-100`}>
+                  {helpsError}
+              </p>
+            )}
+            
           </div>
         </div>
         
