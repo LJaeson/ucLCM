@@ -7,6 +7,7 @@ import FoodDrawer from './components/FoodDrawer';
 import Passport from './components/Passport';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
+const DISCORD_LINK = import.meta.env.DISCORD_LINK;
 
 export default function SuccessPage() {
     const [videoDone, setVideoDone] = useState(false);
@@ -140,7 +141,7 @@ export default function SuccessPage() {
                         )}
 
                         <a 
-                            href="https://discord.gg/tnAkbXaEQ6" 
+                            href={DISCORD_LINK}
                             target="_blank" 
                             rel="noopener noreferrer"
                             className='animate-fade-in font-["Zain"] animate-slow-color text-medium underline mt-4'
