@@ -11,7 +11,7 @@ function MetricCard({ label, value }) {
     );
 }
 
-function HorizontalBarChart({ title, data, maxItems = 8 }) {
+function HorizontalBarChart({ title, data, maxItems = 8, barColor = 'bg-sky-600', barColors = [] }) {
     const displayData = useMemo(() => data.slice(0, maxItems), [data, maxItems]);
     const maxValue = useMemo(() => Math.max(...displayData.map((item) => item.count), 1), [displayData]);
 
@@ -22,7 +22,10 @@ function HorizontalBarChart({ title, data, maxItems = 8 }) {
                 {displayData.length === 0 ? (
                     <p className="text-sm text-slate-500">No data available.</p>
                 ) : (
-                    displayData.map((item) => (
+                    displayData.map((item, index) => {
+                        const itemBarColor = barColors.length > 0 ? barColors[index % barColors.length] : barColor;
+
+                        return (
                         <div key={item.name}>
                             <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
                                 <span className="truncate pr-2">{item.name}</span>
@@ -30,12 +33,13 @@ function HorizontalBarChart({ title, data, maxItems = 8 }) {
                             </div>
                             <div className="h-2 rounded bg-slate-100">
                                 <div
-                                    className="h-2 rounded bg-sky-600"
+                                    className={`h-2 rounded ${itemBarColor}`}
                                     style={{ width: `${Math.max((item.count / maxValue) * 100, 2)}%` }}
                                 />
                             </div>
                         </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </div>
@@ -144,6 +148,7 @@ export default function AdminDashboardPage() {
                                 title="Attendance by Program"
                                 data={analytics.attendance_by_program || []}
                                 maxItems={6}
+                                barColors={['bg-emerald-600', 'bg-sky-600', 'bg-amber-500', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
                             />
                             <HorizontalBarChart
                                 title="Attendance Frequency"
@@ -163,6 +168,7 @@ export default function AdminDashboardPage() {
                                 title="Top Help Topics"
                                 data={analytics.help_topics || []}
                                 maxItems={10}
+                                barColors={['bg-amber-500', 'bg-emerald-600', 'bg-sky-600', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
                             />
 
                             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
