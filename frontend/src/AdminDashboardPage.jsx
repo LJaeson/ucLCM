@@ -45,6 +45,12 @@ function HorizontalBarChart({ title, data, maxItems = 8 }) {
 function VerticalBars({ title, data }) {
     const maxValue = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
 
+    const formatMonth = (monthValue) => {
+        const [year, month] = monthValue.split('-');
+        const date = new Date(Number(year), Number(month) - 1, 1);
+        return new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date);
+    };
+
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
@@ -61,7 +67,7 @@ function VerticalBars({ title, data }) {
                                     style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
                                 />
                             </div>
-                            <div className="mt-2 text-[10px] text-slate-600">{item.month.slice(5)}</div>
+                            <div className="mt-2 text-[10px] text-slate-600">{formatMonth(item.month)}</div>
                         </div>
                     ))}
                 </div>
@@ -145,6 +151,12 @@ export default function AdminDashboardPage() {
                                 maxItems={3}
                             />
                         </div>
+
+                        <HorizontalBarChart
+                            title="Afternoon vs Noon Check-ins"
+                            data={analytics.session_checkins || []}
+                            maxItems={2}
+                        />
 
                         <div className="grid gap-4 lg:grid-cols-2">
                             <HorizontalBarChart
