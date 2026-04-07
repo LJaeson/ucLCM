@@ -56,6 +56,7 @@ class User(SQLModel, table=True):
     total_signature: int
     current_signature: int
     total_attendance: int
+    hoodies_collected: int
 
 class Admin(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -211,7 +212,8 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
             program=data.get('program', ''),
             total_signature=0,
             current_signature=0,
-            total_attendance=1
+            total_attendance=1,
+            hoodies_collected=0
         )
         session.add(user_session)
 
@@ -545,6 +547,7 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
     total_students = len(users)
     total_signed = sum(1 for checkin in checkins if checkin.signed)
     total_food_collected = sum(1 for checkin in checkins if checkin.food)
+    total_hoodies_collected = sum(user.hoodies_collected for user in users)
 
     return {
         "summary": {
@@ -552,6 +555,7 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
             "total_students": total_students,
             "total_signed": total_signed,
             "total_food_collected": total_food_collected,
+            "total_hoodies_collected": total_hoodies_collected,
             "average_attendance_per_student": round(total_checkins / total_students, 2) if total_students > 0 else 0,
         },
         "attendance_by_month": attendance_by_month_result,
@@ -658,6 +662,7 @@ async def admin_redeemscan_qrcode(
         return {"status": "error", "message": f"Not enough stamps, {target_user.name} now has {target_user.current_signature} signatures"}
     
     target_user.current_signature -= 20
+    target_user.hoodies_collected += 1
     session.add(target_user)
     session.commit()
 

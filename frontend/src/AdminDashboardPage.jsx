@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
                             <MetricCard label="Unique Students" value={analytics.summary.total_students} />
                             <MetricCard label="Signed Sessions" value={analytics.summary.total_signed} />
                             <MetricCard label="Food Collected" value={analytics.summary.total_food_collected} />
-                            {/* <MetricCard label="Avg Check-ins / Student" value={analytics.summary.average_attendance_per_student} /> */}
+                            <MetricCard label="Hoodies Collected" value={analytics.summary.total_hoodies_collected} />
                         </div>
 
                         <VerticalBars title="Attendance by Month" data={analytics.attendance_by_month || []} />
