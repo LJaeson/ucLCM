@@ -466,7 +466,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
 
 @app.get("/admin/analytics")
 async def admin_analytics(request: Request, session: Session = Depends(get_session)):
-    validate_admin_session(request, session, "Peer Leader")
+    validate_admin_session(request, session, "Admin")
 
     users = session.exec(select(User)).all()
     checkins = session.exec(select(CheckIn)).all()
