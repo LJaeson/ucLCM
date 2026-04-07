@@ -157,11 +157,18 @@ export default function AdminDashboardPage() {
                             />
                         </div>
 
-                        <HorizontalBarChart
-                            title="Afternoon vs Noon Check-ins"
-                            data={analytics.session_checkins || []}
-                            maxItems={2}
-                        />
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <HorizontalBarChart
+                                title="Afternoon vs Evening Check-ins"
+                                data={analytics.session_checkins || []}
+                                maxItems={2}
+                            />
+                            <HorizontalBarChart
+                                title="Blockhouse vs L5 Check-ins"
+                                data={analytics.venue_checkins || []}
+                                maxItems={2}
+                            />
+                        </div>
 
                         <div className="grid gap-4 lg:grid-cols-2">
                             <HorizontalBarChart

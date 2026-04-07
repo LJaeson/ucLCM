@@ -466,7 +466,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
 
 @app.get("/admin/analytics")
 async def admin_analytics(request: Request, session: Session = Depends(get_session)):
-    validate_admin_session(request, session, "Admin")
+    validate_admin_session(request, session, "Peer Leader")
 
     users = session.exec(select(User)).all()
     checkins = session.exec(select(CheckIn)).all()
@@ -500,13 +500,25 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
     frequency_more_than_five = 0
     afternoon_checkins = 0
     noon_checkins = 0
+    blockhouse_checkins = 0
+    l5_checkins = 0
 
     for checkin in checkins:
         checkin_hour = checkin.time.hour
+        checkin_weekday = checkin.time.weekday()
+
         if 14 <= checkin_hour < 17:
             afternoon_checkins += 1
         elif 17 <= checkin_hour < 20:
             noon_checkins += 1
+
+        if checkin_weekday in (0, 3) and 14 <= checkin_hour < 17:
+            blockhouse_checkins += 1
+
+        is_l5_evening = checkin_weekday in (0, 2, 3) and 17 <= checkin_hour < 20
+        is_l5_tuesday = checkin_weekday == 1 and 14 <= checkin_hour < 20
+        if is_l5_evening or is_l5_tuesday:
+            l5_checkins += 1
 
     for user in users:
         total_attendance = user.total_attendance or 0
@@ -567,7 +579,11 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
         ],
         "session_checkins": [
             {"name": "Afternoon (2-5pm)", "count": afternoon_checkins},
-            {"name": "Noon (5-8pm)", "count": noon_checkins},
+            {"name": "Evening (5-8pm)", "count": noon_checkins},
+        ],
+        "venue_checkins": [
+            {"name": "Blockhouse", "count": blockhouse_checkins},
+            {"name": "L5", "count": l5_checkins},
         ],
         "top_attendees": top_attendees_result,
         "help_topics": help_topics_result,
