@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Response, Request, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Response, Request, Header, HTTPException, status, Query
 import os
 import uuid
 from dotenv import load_dotenv
@@ -465,11 +465,28 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
 
 
 @app.get("/admin/analytics")
-async def admin_analytics(request: Request, session: Session = Depends(get_session)):
+async def admin_analytics(
+    request: Request,
+    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
+    session: Session = Depends(get_session),
+):
     validate_admin_session(request, session, "Admin")
 
     users = session.exec(select(User)).all()
-    checkins = session.exec(select(CheckIn)).all()
+    all_checkins = session.exec(select(CheckIn)).all()
+
+    selected_month = None
+    if month:
+        try:
+            selected_month = datetime.strptime(month, "%Y-%m").strftime("%Y-%m")
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.") from error
+
+    checkins = all_checkins
+    if selected_month:
+        checkins = [checkin for checkin in all_checkins if checkin.time.strftime("%Y-%m") == selected_month]
+
+    user_by_zid = {user.zid: user for user in users}
 
     program_by_zid = {user.zid: PROGRAM_LABELS.get(user.program, "Unknown") for user in users}
 
@@ -477,9 +494,11 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
     attendance_by_month: dict[str, int] = {}
     help_topic_counts: dict[str, int] = {}
 
-    for checkin in checkins:
+    for checkin in all_checkins:
         month_key = checkin.time.strftime("%Y-%m")
         attendance_by_month[month_key] = attendance_by_month.get(month_key, 0) + 1
+
+    for checkin in checkins:
 
         program_name = program_by_zid.get(checkin.zid, "Unknown")
         attendance_by_program[program_name] = attendance_by_program.get(program_name, 0) + 1
@@ -502,10 +521,12 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
     noon_checkins = 0
     blockhouse_checkins = 0
     l5_checkins = 0
+    attendance_count_by_student: dict[str, int] = {}
 
     for checkin in checkins:
         checkin_hour = checkin.time.hour
         checkin_weekday = checkin.time.weekday()
+        attendance_count_by_student[checkin.zid] = attendance_count_by_student.get(checkin.zid, 0) + 1
 
         if 14 <= checkin_hour < 17:
             afternoon_checkins += 1
@@ -520,8 +541,7 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
         if is_l5_evening or is_l5_tuesday:
             l5_checkins += 1
 
-    for user in users:
-        total_attendance = user.total_attendance or 0
+    for total_attendance in attendance_count_by_student.values():
         if total_attendance <= 1:
             frequency_once += 1
         elif total_attendance <= 5:
@@ -548,20 +568,25 @@ async def admin_analytics(request: Request, session: Session = Depends(get_sessi
 
     top_attendees_result = [
         {
-            "zid": user.zid,
-            "name": user.name,
-            "sessions": user.total_attendance,
+            "zid": zid,
+            "name": user.name if (user := user_by_zid.get(zid)) else "Unknown",
+            "sessions": sessions,
         }
-        for user in sorted(users, key=lambda item: item.total_attendance, reverse=True)[:15]
+        for zid, sessions in sorted(attendance_count_by_student.items(), key=lambda item: item[1], reverse=True)[:15]
     ]
 
     total_checkins = len(checkins)
-    total_students = len(users)
+    student_zids = set(attendance_count_by_student.keys())
+    total_students = len(student_zids)
     total_signed = sum(1 for checkin in checkins if checkin.signed)
     total_food_collected = sum(1 for checkin in checkins if checkin.food)
-    total_hoodies_collected = sum(user.hoodies_collected for user in users)
+    if selected_month:
+        total_hoodies_collected = sum(user_by_zid[zid].hoodies_collected for zid in student_zids if zid in user_by_zid)
+    else:
+        total_hoodies_collected = sum(user.hoodies_collected for user in users)
 
     return {
+        "selected_month": selected_month,
         "summary": {
             "total_checkins": total_checkins,
             "total_students": total_students,

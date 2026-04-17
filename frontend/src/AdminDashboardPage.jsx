@@ -46,7 +46,7 @@ function HorizontalBarChart({ title, data, maxItems = 8, barColor = 'bg-sky-600'
     );
 }
 
-function VerticalBars({ title, data }) {
+function VerticalBars({ title, data, selectedMonth, onSelectMonth }) {
     const maxValue = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
 
     const formatMonth = (monthValue) => {
@@ -63,16 +63,23 @@ function VerticalBars({ title, data }) {
             ) : (
                 <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 xl:grid-cols-12">
                     {data.map((item) => (
-                        <div key={item.month} className="flex flex-col items-center justify-end">
+                        <button
+                            key={item.month}
+                            type="button"
+                            onClick={() => onSelectMonth(item.month)}
+                            className="flex flex-col items-center justify-end"
+                        >
                             <div className="mb-2 text-[10px] text-slate-500">{item.count}</div>
                             <div className="flex h-36 w-full items-end rounded bg-slate-100 px-1">
                                 <div
-                                    className="w-full rounded bg-sky-600"
+                                    className={`w-full rounded ${selectedMonth === item.month ? 'bg-indigo-600' : 'bg-sky-600'}`}
                                     style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
                                 />
                             </div>
-                            <div className="mt-2 text-[10px] text-slate-600">{formatMonth(item.month)}</div>
-                        </div>
+                            <div className={`mt-2 text-[10px] ${selectedMonth === item.month ? 'font-semibold text-indigo-700' : 'text-slate-600'}`}>
+                                {formatMonth(item.month)}
+                            </div>
+                        </button>
                     ))}
                 </div>
             )}
@@ -84,13 +91,19 @@ export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [analytics, setAnalytics] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
                 setLoading(true);
                 setError('');
-                const response = await fetch(`${ADDRESS}/admin/analytics`, {
+                const analyticsUrl = new URL(`${ADDRESS}/admin/analytics`);
+                if (selectedMonth) {
+                    analyticsUrl.searchParams.set('month', selectedMonth);
+                }
+
+                const response = await fetch(analyticsUrl.toString(), {
                     method: 'GET',
                     credentials: 'include',
                 });
@@ -112,7 +125,7 @@ export default function AdminDashboardPage() {
         };
 
         fetchAnalytics();
-    }, []);
+    }, [selectedMonth]);
 
     return (
         <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-8">
@@ -133,6 +146,19 @@ export default function AdminDashboardPage() {
 
                 {!loading && !error && analytics && (
                     <div className="space-y-6">
+                        {selectedMonth && (
+                            <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                                <span>Filtered to {selectedMonth}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedMonth(null)}
+                                    className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        )}
+
                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                             <MetricCard label="Total Check-ins" value={analytics.summary.total_checkins} />
                             <MetricCard label="Unique Students" value={analytics.summary.total_students} />
@@ -141,7 +167,14 @@ export default function AdminDashboardPage() {
                             <MetricCard label="Hoodies Collected" value={analytics.summary.total_hoodies_collected} />
                         </div>
 
-                        <VerticalBars title="Attendance by Month" data={analytics.attendance_by_month || []} />
+                        <VerticalBars
+                            title="Attendance by Month"
+                            data={analytics.attendance_by_month || []}
+                            selectedMonth={selectedMonth}
+                            onSelectMonth={(monthValue) =>
+                                setSelectedMonth((currentMonth) => (currentMonth === monthValue ? null : monthValue))
+                            }
+                        />
 
                         <div className="grid gap-4 lg:grid-cols-2">
                             <HorizontalBarChart
