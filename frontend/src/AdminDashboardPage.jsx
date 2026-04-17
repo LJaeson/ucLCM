@@ -2,6 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
+function buildAnalyticsUrl(month) {
+    const query = month ? `?month=${encodeURIComponent(month)}` : '';
+
+    if (ADDRESS && /^https?:\/\//.test(ADDRESS)) {
+        return `${ADDRESS}/admin/analytics${query}`;
+    }
+
+    return `/api/admin/analytics${query}`;
+}
+
 function MetricCard({ label, value }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -98,12 +108,7 @@ export default function AdminDashboardPage() {
             try {
                 setLoading(true);
                 setError('');
-                const analyticsUrl = new URL(`${ADDRESS}/admin/analytics`);
-                if (selectedMonth) {
-                    analyticsUrl.searchParams.set('month', selectedMonth);
-                }
-
-                const response = await fetch(analyticsUrl.toString(), {
+                const response = await fetch(buildAnalyticsUrl(selectedMonth), {
                     method: 'GET',
                     credentials: 'include',
                 });
