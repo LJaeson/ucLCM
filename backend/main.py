@@ -147,7 +147,7 @@ def find_record_by_zid(zid:str, session: Session):
     return session.exec(statement).first() 
 
 
-def validate_admin_session(request: Request, session: Session, role: str):
+def validate_admin_session(request: Request, session: Session, role: str | None = None):
     admin_session_id = request.cookies.get("admin_session_id")
     if not admin_session_id:
         raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
@@ -161,7 +161,7 @@ def validate_admin_session(request: Request, session: Session, role: str):
     if curr_time > leader.expires_at:
         raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
     
-    if leader.role != role:
+    if role and leader.role != role:
         raise HTTPException(status_code=403, detail="Unauthorized: Insufficient permissions")
 
     return leader
@@ -312,16 +312,25 @@ async def existcheckin(data: dict, response: Response ,session: Session = Depend
 
 
 @app.get("/whoami")
-async def get_user(request: Request, session: Session = Depends(get_session)):
-    # Check if the cookie exists
-    user = find_user_by_session(request, session)
-    if not user:
+async def get_user(request: Request, session: Session = Depends(get_session), zid: str | None = None):
+    row = None
+    user = None
+    
+    if not zid:
+        # Check if the cookie exists
+        user = find_user_by_session(request, session)
+    else:
+        validate_admin_session(request, session, 'Admin')
+        user = find_user_by_zid(zid, session)
+
+    if not user or user == None:
         return {"recorded": False}
     
-    curr_time = get_current_time()
+    
     row = find_record_by_user(user, session)
 
     checkined = False
+    curr_time = get_current_time()
     if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
         checkined = True
 
@@ -331,7 +340,8 @@ async def get_user(request: Request, session: Session = Depends(get_session)):
         "zid": user.zid,
         "name": user.name,
         "program": user.program,
-        "current_signature:": user.current_signature
+        "current_signature": user.current_signature,
+        "total_signature": user.total_signature
     }
 
 
@@ -463,6 +473,12 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
     
     return {"status": "success", "name": new_leader.name}
 
+@app.get("/admin/checkAdmin")
+async def admin_checkAdmin(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    validate_admin_session(request, session, "Admin")
 
 @app.get("/admin/analytics")
 async def admin_analytics(
@@ -660,6 +676,34 @@ async def stamps_status(request: Request, session: Session = Depends(get_session
     else:
         return {"finished": False, "count": user.current_signature}
 
+
+@app.post("/admin/modify")
+async def admin_modify(
+    data: dict,
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    validate_admin_session(request, session, 'Admin')
+
+    user_statement = select(User).where(User.zid == data.get('zid'))
+    target_user = session.exec(user_statement).first()
+    if not target_user:
+        return {"status": "error", "message": "User account not found"}
+    
+    if data.get('total_signature') is not None: 
+        target_user.total_signature = data['total_signature']
+
+    if data.get('current_signature') is not None: 
+        target_user.current_signature = data['current_signature']
+
+    session.add(target_user)
+    session.commit()
+
+    return {
+        "status": "success",
+    }
+    
+
 @app.post("/admin/redeem/{qr_code}")
 async def admin_redeemscan_qrcode(
     qr_code: str, 
@@ -667,20 +711,7 @@ async def admin_redeemscan_qrcode(
     session: Session = Depends(get_session),
 ):
     # authorizing
-    admin_session_id = request.cookies.get("admin_session_id")
-    if not admin_session_id:
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
-    
-    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
-    leader = session.exec(leader_statement).first()
-
-    if not leader:
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
-    
-    curr_time = get_current_time()
-    
-    if curr_time > leader.expires_at:
-        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    validate_admin_session(request, session)
 
     #redeem
     if len(qr_code) < 16:

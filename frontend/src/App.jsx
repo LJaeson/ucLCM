@@ -11,6 +11,7 @@ import AdminLoginPage from './AdminLoginPage';
 import AdminRedeemPage from './AdminRedeemPage';
 import AdminLoginSuccessPage from './AdminLoginSuccessPage';
 import AdminDashboardPage from './AdminDashboardPage';
+import AdminModifyPage from './AdminModifyPage';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -108,6 +109,9 @@ export default function App() {
 
             {/* admin login success page */}
             <Route path="/admin/success" element={<AdminLoginSuccessPage/>} />
+
+            {/* admin change count page */}
+            <Route path="/admin/modify" element={<AdminModifyPage/>} />
         </Routes>
       </BrowserRouter>
       <Analytics/>
