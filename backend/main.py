@@ -182,17 +182,47 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
     raw_zid = data['zid']
     # check if the user already checkin for today
     row = find_record_by_zid(raw_zid, session)
-    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
-        print(f"Failed: {raw_zid} has the record today at this session time")
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
-            detail="You have already checked in for this session today."
-        )
-
-    # if the student zid is already recorded
     new_session_id = str(uuid.uuid4())
-    statement = select(User).where(User.zid == raw_zid)
-    record = session.exec(statement).first()
+    record = find_user_by_zid(raw_zid, session)
+
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        # # old version, whcihhh just send the invalid reply to them
+        # print(f"Failed: {raw_zid} has the record today at this session time")
+        # raise HTTPException(
+        #     status_code=status.HTTP_409_CONFLICT, 
+        #     detail="You have already checked in for this session today."
+        # )
+    
+        # new version, which just return the new session
+        if record:
+            record.session_id = new_session_id
+            record.name = data['name']
+            record.program = data.get('program', '')
+
+            session.add(record)
+            session.commit()
+
+            response.set_cookie(
+                key="session_id",
+                value=new_session_id,
+                max_age=60*60*24*365,
+                httponly=True,
+                samesite='lax',
+                secure=IS_PRODUCTION,
+            )
+
+            return {"status": "success"}
+
+
+        else:
+            print(f"Secondary error: cannot find the user with existing checkin record with provided zid {raw_zid}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, 
+                detail="internal error: 170701"
+            ) 
+
+
+    # if the student zid is already recorded, which means this student have been here before
     if record:
         print(f"have record for {record.zid}")
 
@@ -201,7 +231,6 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         record.program = data.get('program', '')
         record.total_attendance += 1
 
-        session.add(record)
 
     else:
         # generate new session id
@@ -218,6 +247,7 @@ async def checkin(data: dict, response: Response ,session: Session = Depends(get
         session.add(user_session)
 
     # Create a new row in the database
+
     new_checkin = CheckIn(
         zid=data['zid'],
         # name=data['name'],

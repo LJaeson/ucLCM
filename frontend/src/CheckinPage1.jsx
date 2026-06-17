@@ -125,7 +125,7 @@ export default function CheckinPage({setFinish, setStart}) {
       formatttedZid = `z${formatttedZid}`;
     }
 
-
+    // Send the data to the server
     try {
       const response = await fetch(`${ADDRESS}/checkin`, {
         method: "POST",
