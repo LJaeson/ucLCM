@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
-function buildAnalyticsUrl(month) {
-    const query = month ? `?month=${encodeURIComponent(month)}` : '';
+function buildAnalyticsUrl(month, timeInADay) {
+    let query = month ? `?month=${encodeURIComponent(month)}` : '';
+    query += timeInADay ? `${query ? '&' : '?'}timeInADay=${encodeURIComponent(timeInADay)}` : '';
 
     if (ADDRESS && /^https?:\/\//.test(ADDRESS)) {
         return `${ADDRESS}/admin/analytics${query}`;
@@ -21,7 +22,15 @@ function MetricCard({ label, value }) {
     );
 }
 
-function HorizontalBarChart({ title, data, maxItems = 8, barColor = 'bg-sky-600', barColors = [] }) {
+function HorizontalBarChart({
+    title,
+    data,
+    maxItems = 8,
+    barColor = 'bg-sky-600',
+    barColors = [],
+    onItemClick,
+    activeItemName = null,
+}) {
     const displayData = useMemo(() => data.slice(0, maxItems), [data, maxItems]);
     const maxValue = useMemo(() => Math.max(...displayData.map((item) => item.count), 1), [displayData]);
 
@@ -34,20 +43,28 @@ function HorizontalBarChart({ title, data, maxItems = 8, barColor = 'bg-sky-600'
                 ) : (
                     displayData.map((item, index) => {
                         const itemBarColor = barColors.length > 0 ? barColors[index % barColors.length] : barColor;
+                        const isActive = activeItemName === item.name;
+                        const itemClassName = `group block w-full text-left ${onItemClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2' : ''}`;
 
                         return (
-                        <div key={item.name}>
-                            <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                                <span className="truncate pr-2">{item.name}</span>
-                                <span>{item.count}</span>
-                            </div>
-                            <div className="h-2 rounded bg-slate-100">
-                                <div
-                                    className={`h-2 rounded ${itemBarColor}`}
-                                    style={{ width: `${Math.max((item.count / maxValue) * 100, 2)}%` }}
-                                />
-                            </div>
-                        </div>
+                            <button
+                                key={item.name}
+                                type="button"
+                                onClick={() => onItemClick?.(item)}
+                                disabled={!onItemClick}
+                                className={itemClassName}
+                            >
+                                <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                                    <span className={`truncate pr-2 ${isActive ? 'font-semibold text-indigo-700' : ''}`}>{item.name}</span>
+                                    <span className={isActive ? 'font-semibold text-indigo-700' : ''}>{item.count}</span>
+                                </div>
+                                <div className={`h-2 rounded ${isActive ? 'bg-indigo-100' : 'bg-slate-100'}`}>
+                                    <div
+                                        className={`h-2 rounded ${itemBarColor} ${isActive ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                                        style={{ width: `${Math.max((item.count / maxValue) * 100, 2)}%` }}
+                                    />
+                                </div>
+                            </button>
                         );
                     })
                 )}
@@ -102,13 +119,20 @@ export default function AdminDashboardPage() {
     const [error, setError] = useState('');
     const [analytics, setAnalytics] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedTimeInADay, setSelectedTimeInADay] = useState(null);
+
+    const selectedTimeLabel = selectedTimeInADay === 'afternoon'
+        ? 'Afternoon (2-5pm)'
+        : selectedTimeInADay === 'evening'
+            ? 'Evening (5-8pm)'
+            : null;
 
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
                 setLoading(true);
                 setError('');
-                const response = await fetch(buildAnalyticsUrl(selectedMonth), {
+                const response = await fetch(buildAnalyticsUrl(selectedMonth, selectedTimeInADay), {
                     method: 'GET',
                     credentials: 'include',
                 });
@@ -130,7 +154,12 @@ export default function AdminDashboardPage() {
         };
 
         fetchAnalytics();
-    }, [selectedMonth]);
+    }, [selectedMonth, selectedTimeInADay]);
+
+    const handleTimeBarClick = (itemName) => {
+        const nextTimeInADay = itemName === 'Afternoon (2-5pm)' ? 'afternoon' : 'evening';
+        setSelectedTimeInADay((currentValue) => (currentValue === nextTimeInADay ? null : nextTimeInADay));
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-8">
@@ -151,15 +180,20 @@ export default function AdminDashboardPage() {
 
                 {!loading && !error && analytics && (
                     <div className="space-y-6">
-                        {selectedMonth && (
+                        {(selectedMonth || selectedTimeLabel) && (
                             <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                <span>Filtered to {selectedMonth}</span>
+                                <span>
+                                    Filtered to {selectedMonth || 'all months'}{selectedMonth && selectedTimeLabel ? ' and ' : ''}{selectedTimeLabel || ''}
+                                </span>
                                 <button
                                     type="button"
-                                    onClick={() => setSelectedMonth(null)}
+                                    onClick={() => {
+                                        setSelectedMonth(null);
+                                        setSelectedTimeInADay(null);
+                                    }}
                                     className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100"
                                 >
-                                    Clear
+                                    Clear all
                                 </button>
                             </div>
                         )}
@@ -200,6 +234,8 @@ export default function AdminDashboardPage() {
                                 title="Afternoon vs Evening Check-ins"
                                 data={analytics.session_checkins || []}
                                 maxItems={2}
+                                onItemClick={(item) => handleTimeBarClick(item.name)}
+                                activeItemName={selectedTimeLabel}
                             />
                             <HorizontalBarChart
                                 title="Blockhouse vs L5 Check-ins"

@@ -514,6 +514,7 @@ async def admin_checkAdmin(
 async def admin_analytics(
     request: Request,
     month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
+    timeInADay: str | None = Query(default=None, description="Optional, the string either 'afternoon' or 'evening'"),
     session: Session = Depends(get_session),
 ):
     validate_admin_session(request, session, "Admin")
@@ -531,6 +532,13 @@ async def admin_analytics(
     checkins = all_checkins
     if selected_month:
         checkins = [checkin for checkin in all_checkins if checkin.time.strftime("%Y-%m") == selected_month]
+    
+    if timeInADay:
+        if timeInADay == 'afternoon':
+            checkins = [checkin for checkin in checkins if 14 <= checkin.time.hour < 17]
+        elif timeInADay == 'evening':
+            checkins = [checkin for checkin in checkins if 17 <= checkin.time.hour < 20]
+            
 
     user_by_zid = {user.zid: user for user in users}
 

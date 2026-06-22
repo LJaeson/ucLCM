@@ -276,7 +276,7 @@ export default function CheckinPage({setFinish, setStart}) {
         <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms] font-["Zain"]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500"
+            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 focus:border-teal-500 focus:text-white active:bg-teal-500 active:text-white"
           >
             Check in
           </button>
