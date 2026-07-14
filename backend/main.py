@@ -409,66 +409,6 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         "rest_time": seconds_left
     }
 
-@app.post("/admin/scan/{qr_code}")
-async def scan_qrcode(
-    qr_code: str, 
-    request: Request, 
-    session: Session = Depends(get_session),
-    # Require an admin password to be sent in the request headers
-    # x_admin_token: str = Header(None) 
-):
-    # authorizing
-    admin_session_id = request.cookies.get("admin_session_id")
-    if not admin_session_id:
-        print("401 no admin token")
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
-    
-    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
-    leader = session.exec(leader_statement).first()
-
-    if not leader:
-        print("401 Admin access invalid")
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
-    
-    curr_time = get_current_time()
-    
-    if curr_time > leader.expires_at:
-        print("401 Session expired")
-        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
-
-    #qrcode checking
-    if len(qr_code) < 16:
-        return {"status": "error", "message": "Invalid QR code format"}
-    
-    signature_token = qr_code[-8:]
-    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
-    row = session.exec(statement).first()
-    if not row:
-        return {"status": "error", "message": "No check-in found for today"}
-    
-    if row.signed:
-        return {"status": "error", "message": "Already checked in for today"}
-
-    row.signed = True
-    session.add(row)
-
-
-    zid = qr_code[:8]
-    user_statement = select(User).where(User.zid == zid)
-    target_user = session.exec(user_statement).first()
-    if not target_user:
-        return {"status": "error", "message": "User account not found"}
-    
-    target_user.total_signature += 1
-    target_user.current_signature += 1
-    session.add(target_user)
-
-    session.commit()
-
-    return {
-        "status": "success",
-        "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
-    }
 
 
 @app.patch("/checkin/food")
@@ -787,4 +727,66 @@ async def admin_redeemscan_qrcode(
     return {
         "status": "success",
         "message": f"Successfully redeemed! {target_user.name} now has {target_user.current_signature} signatures."
+    }
+
+
+@app.post("/admin/scan/{qr_code}")
+async def scan_qrcode(
+    qr_code: str, 
+    request: Request, 
+    session: Session = Depends(get_session),
+    # Require an admin password to be sent in the request headers
+    # x_admin_token: str = Header(None) 
+):
+    # authorizing
+    admin_session_id = request.cookies.get("admin_session_id")
+    if not admin_session_id:
+        print("401 no admin token")
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
+    leader = session.exec(leader_statement).first()
+
+    if not leader:
+        print("401 Admin access invalid")
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
+    
+    curr_time = get_current_time()
+    
+    if curr_time > leader.expires_at:
+        print("401 Session expired")
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+
+    #qrcode checking
+    if len(qr_code) < 16:
+        return {"status": "error", "message": "Invalid QR code format"}
+    
+    signature_token = qr_code[-8:]
+    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
+    row = session.exec(statement).first()
+    if not row:
+        return {"status": "error", "message": "No check-in found for today"}
+    
+    if row.signed:
+        return {"status": "error", "message": "Already checked in for today"}
+
+    row.signed = True
+    session.add(row)
+
+
+    zid = qr_code[:8]
+    user_statement = select(User).where(User.zid == zid)
+    target_user = session.exec(user_statement).first()
+    if not target_user:
+        return {"status": "error", "message": "User account not found"}
+    
+    target_user.total_signature += 1
+    target_user.current_signature += 1
+    session.add(target_user)
+
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
     }
