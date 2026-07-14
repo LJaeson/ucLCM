@@ -68,6 +68,7 @@ class Admin(SQLModel, table=True):
 class Feedback(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     zid: str
+    rating: float
     message: str
     message2: str
     message3: str
@@ -469,6 +470,58 @@ async def scan_qrcode(
         "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
     }
 
+
+@app.patch("/checkin/food")
+async def collect_food(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    row = find_record_by_user(user, session)
+    if not row:
+        raise HTTPException(status_code=404, detail="No check-in found for today")
+
+    row.food = True
+    session.add(row)
+    session.commit()
+
+    return {"status": "success", "message": "Food collected"}
+
+
+@app.get("/status/food")
+async def food_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    row = find_record_by_user(user, session)
+    if not row:
+        raise HTTPException(status_code=404, detail="No check-in found for today")
+
+    return {"food": row.food}
+
+@app.get("/status/stamps")
+async def stamps_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if user.current_signature >= 20:
+        row = find_record_by_user(user, session)
+        if not row:
+            return {"error": "user should at least have one record"}
+
+        scan_url = f"{ADDRESS}/admin/redeem/{user.zid}{row.signature_token}"
+        return {"finished": True, "count": user.current_signature, "qrcode": scan_url}
+    else:
+        return {"finished": False, "count": user.current_signature}
+
+
+
+################################################################
+######################### Admin Features #######################
+################################################################
+
 @app.post("/admin/login")
 async def admin_login(data: dict, response: Response, session: Session = Depends(get_session)):
     if data.get("password") != PEERLEADER_PASSWORD:
@@ -668,51 +721,6 @@ async def admin_analytics(
         "help_topics": help_topics_result,
     }
 
-
-@app.patch("/checkin/food")
-async def collect_food(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    row = find_record_by_user(user, session)
-    if not row:
-        raise HTTPException(status_code=404, detail="No check-in found for today")
-
-    row.food = True
-    session.add(row)
-    session.commit()
-
-    return {"status": "success", "message": "Food collected"}
-
-
-@app.get("/status/food")
-async def food_status(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    row = find_record_by_user(user, session)
-    if not row:
-        raise HTTPException(status_code=404, detail="No check-in found for today")
-
-    return {"food": row.food}
-
-@app.get("/status/stamps")
-async def stamps_status(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    if user.current_signature >= 20:
-        row = find_record_by_user(user, session)
-        if not row:
-            return {"error": "user should at least have one record"}
-
-        scan_url = f"{ADDRESS}/admin/redeem/{user.zid}{row.signature_token}"
-        return {"finished": True, "count": user.current_signature, "qrcode": scan_url}
-    else:
-        return {"finished": False, "count": user.current_signature}
 
 
 @app.post("/admin/modify")
