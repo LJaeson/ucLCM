@@ -69,9 +69,9 @@ class Feedback(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     zid: str
     rating: float
-    message: str
-    message2: str
-    message3: str
+    message: str | None
+    message2: str | None
+    message3: str | None
     time: datetime
 
 engine = create_engine(DATABASE_URL)
@@ -167,6 +167,13 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 
     return leader
 
+def get_record_seconds_left_by_row(row: CheckIn):
+    curr_time = get_current_time()
+
+    target_time = row.time + timedelta(minutes=30)
+    time_left = target_time - curr_time
+
+    return int(time_left.total_seconds())
 
 @app.post("/checkin")
 async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
@@ -389,10 +396,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         return {"error": "Time not found"}
     
     curr_time = get_current_time()
-    
-    target_time = row.time + timedelta(minutes=30)
-    time_left = target_time - curr_time
-    seconds_left = int(time_left.total_seconds())
+    seconds_left = get_record_seconds_left_by_row(row)
 
     if seconds_left <= 0:
         date_str = curr_time.strftime("%Y%m%d")
@@ -426,6 +430,55 @@ async def collect_food(request: Request, session: Session = Depends(get_session)
     session.commit()
 
     return {"status": "success", "message": "Food collected"}
+
+@app.post("/feedback")
+async def send_feedback(data: dict, request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    row = find_record_by_user(user, session)
+    if row is None:
+        raise HTTPException(status_code=401, detail="Todays record not found")
+    
+    # check if the time reach or not
+    seconds_left = get_record_seconds_left_by_row(row)
+
+    if seconds_left > 0:
+        raise HTTPException(status_code=401, detail="Havn't reach the time")
+
+    # check if this user already has submit the the feedback for this study session
+    curr_time = get_current_time()
+
+    statement = (
+        select(Feedback)
+        .where(
+            Feedback.zid == user.zid, 
+            func.date(Feedback.time) == curr_time.date()
+        )
+        .order_by(desc(Feedback.time))
+    )
+
+    row = session.exec(statement).first()
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        return {"status": "fail", "message": "Already submit the feedback"}
+    
+
+    # Create a new row in the database
+    new_feedback = Feedback(
+        zid=data['zid'],
+        rating=data['rating'],
+        message=data.get('message', None),
+        message2=data.get('message2', None),
+        message3=data.get('message3', None),
+        time=curr_time,
+    )
+
+    session.add(new_feedback)
+
+    session.commit()
+
+    return {"status": "success"}
 
 
 @app.get("/status/food")
