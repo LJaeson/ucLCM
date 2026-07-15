@@ -68,7 +68,7 @@ class Admin(SQLModel, table=True):
 class Feedback(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     zid: str
-    rating: float
+    rating: int
     message: str | None
     message2: str | None
     message3: str | None
@@ -466,7 +466,7 @@ async def send_feedback(data: dict, request: Request, session: Session = Depends
 
     # Create a new row in the database
     new_feedback = Feedback(
-        zid=data['zid'],
+        zid=user.zid,
         rating=data['rating'],
         message=data.get('message', None),
         message2=data.get('message2', None),
