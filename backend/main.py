@@ -68,9 +68,10 @@ class Admin(SQLModel, table=True):
 class Feedback(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     zid: str
-    message: str
-    message2: str
-    message3: str
+    rating: int
+    message: str | None
+    message2: str | None
+    message3: str | None
     time: datetime
 
 engine = create_engine(DATABASE_URL)
@@ -166,6 +167,13 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 
     return leader
 
+def get_record_seconds_left_by_row(row: CheckIn):
+    curr_time = get_current_time()
+
+    target_time = row.time + timedelta(minutes=30)
+    time_left = target_time - curr_time
+
+    return int(time_left.total_seconds())
 
 @app.post("/checkin")
 async def checkin(data: dict, response: Response ,session: Session = Depends(get_session)):
@@ -388,10 +396,7 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         return {"error": "Time not found"}
     
     curr_time = get_current_time()
-    
-    target_time = row.time + timedelta(minutes=30)
-    time_left = target_time - curr_time
-    seconds_left = int(time_left.total_seconds())
+    seconds_left = get_record_seconds_left_by_row(row)
 
     if seconds_left <= 0:
         date_str = curr_time.strftime("%Y%m%d")
@@ -408,66 +413,107 @@ async def get_qrcode(request: Request,  session: Session = Depends(get_session))
         "rest_time": seconds_left
     }
 
-@app.post("/admin/scan/{qr_code}")
-async def scan_qrcode(
-    qr_code: str, 
-    request: Request, 
-    session: Session = Depends(get_session),
-    # Require an admin password to be sent in the request headers
-    # x_admin_token: str = Header(None) 
-):
-    # authorizing
-    admin_session_id = request.cookies.get("admin_session_id")
-    if not admin_session_id:
-        print("401 no admin token")
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
-    
-    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
-    leader = session.exec(leader_statement).first()
 
-    if not leader:
-        print("401 Admin access invalid")
-        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
-    
-    curr_time = get_current_time()
-    
-    if curr_time > leader.expires_at:
-        print("401 Session expired")
-        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
 
-    #qrcode checking
-    if len(qr_code) < 16:
-        return {"status": "error", "message": "Invalid QR code format"}
-    
-    signature_token = qr_code[-8:]
-    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
-    row = session.exec(statement).first()
+@app.patch("/checkin/food")
+async def collect_food(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    row = find_record_by_user(user, session)
     if not row:
-        return {"status": "error", "message": "No check-in found for today"}
-    
-    if row.signed:
-        return {"status": "error", "message": "Already checked in for today"}
+        raise HTTPException(status_code=404, detail="No check-in found for today")
 
-    row.signed = True
+    row.food = True
     session.add(row)
+    session.commit()
 
+    return {"status": "success", "message": "Food collected"}
 
-    zid = qr_code[:8]
-    user_statement = select(User).where(User.zid == zid)
-    target_user = session.exec(user_statement).first()
-    if not target_user:
-        return {"status": "error", "message": "User account not found"}
+@app.post("/feedback")
+async def send_feedback(data: dict, request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
     
-    target_user.total_signature += 1
-    target_user.current_signature += 1
-    session.add(target_user)
+    row = find_record_by_user(user, session)
+    if row is None:
+        raise HTTPException(status_code=401, detail="Todays record not found")
+    
+    # check if the time reach or not
+    seconds_left = get_record_seconds_left_by_row(row)
+
+    if seconds_left > 0:
+        raise HTTPException(status_code=401, detail="Havn't reach the time")
+
+    # check if this user already has submit the the feedback for this study session
+    curr_time = get_current_time()
+
+    statement = (
+        select(Feedback)
+        .where(
+            Feedback.zid == user.zid, 
+            func.date(Feedback.time) == curr_time.date()
+        )
+        .order_by(desc(Feedback.time))
+    )
+
+    row = session.exec(statement).first()
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        return {"status": "fail", "message": "Already submit the feedback"}
+    
+
+    # Create a new row in the database
+    new_feedback = Feedback(
+        zid=user.zid,
+        rating=data['rating'],
+        message=data.get('message', None),
+        message2=data.get('message2', None),
+        message3=data.get('message3', None),
+        time=curr_time,
+    )
+
+    session.add(new_feedback)
 
     session.commit()
 
-    return {
-        "status": "success",
-        "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
-    }
+    return {"status": "success"}
+
+
+@app.get("/status/food")
+async def food_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    row = find_record_by_user(user, session)
+    if not row:
+        raise HTTPException(status_code=404, detail="No check-in found for today")
+
+    return {"food": row.food}
+
+@app.get("/status/stamps")
+async def stamps_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if user.current_signature >= 20:
+        row = find_record_by_user(user, session)
+        if not row:
+            return {"error": "user should at least have one record"}
+
+        scan_url = f"{ADDRESS}/admin/redeem/{user.zid}{row.signature_token}"
+        return {"finished": True, "count": user.current_signature, "qrcode": scan_url}
+    else:
+        return {"finished": False, "count": user.current_signature}
+
+
+
+################################################################
+######################### Admin Features #######################
+################################################################
 
 @app.post("/admin/login")
 async def admin_login(data: dict, response: Response, session: Session = Depends(get_session)):
@@ -669,51 +715,6 @@ async def admin_analytics(
     }
 
 
-@app.patch("/checkin/food")
-async def collect_food(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    row = find_record_by_user(user, session)
-    if not row:
-        raise HTTPException(status_code=404, detail="No check-in found for today")
-
-    row.food = True
-    session.add(row)
-    session.commit()
-
-    return {"status": "success", "message": "Food collected"}
-
-
-@app.get("/status/food")
-async def food_status(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    row = find_record_by_user(user, session)
-    if not row:
-        raise HTTPException(status_code=404, detail="No check-in found for today")
-
-    return {"food": row.food}
-
-@app.get("/status/stamps")
-async def stamps_status(request: Request, session: Session = Depends(get_session)):
-    user = find_user_by_session(request, session)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    if user.current_signature >= 20:
-        row = find_record_by_user(user, session)
-        if not row:
-            return {"error": "user should at least have one record"}
-
-        scan_url = f"{ADDRESS}/admin/redeem/{user.zid}{row.signature_token}"
-        return {"finished": True, "count": user.current_signature, "qrcode": scan_url}
-    else:
-        return {"finished": False, "count": user.current_signature}
-
 
 @app.post("/admin/modify")
 async def admin_modify(
@@ -779,4 +780,66 @@ async def admin_redeemscan_qrcode(
     return {
         "status": "success",
         "message": f"Successfully redeemed! {target_user.name} now has {target_user.current_signature} signatures."
+    }
+
+
+@app.post("/admin/scan/{qr_code}")
+async def scan_qrcode(
+    qr_code: str, 
+    request: Request, 
+    session: Session = Depends(get_session),
+    # Require an admin password to be sent in the request headers
+    # x_admin_token: str = Header(None) 
+):
+    # authorizing
+    admin_session_id = request.cookies.get("admin_session_id")
+    if not admin_session_id:
+        print("401 no admin token")
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access required")
+    
+    leader_statement = select(Admin).where(Admin.session_id == admin_session_id)
+    leader = session.exec(leader_statement).first()
+
+    if not leader:
+        print("401 Admin access invalid")
+        raise HTTPException(status_code=401, detail="Unauthorized: Admin access invalid")
+    
+    curr_time = get_current_time()
+    
+    if curr_time > leader.expires_at:
+        print("401 Session expired")
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+
+    #qrcode checking
+    if len(qr_code) < 16:
+        return {"status": "error", "message": "Invalid QR code format"}
+    
+    signature_token = qr_code[-8:]
+    statement = select(CheckIn).where(CheckIn.signature_token == signature_token)
+    row = session.exec(statement).first()
+    if not row:
+        return {"status": "error", "message": "No check-in found for today"}
+    
+    if row.signed:
+        return {"status": "error", "message": "Already checked in for today"}
+
+    row.signed = True
+    session.add(row)
+
+
+    zid = qr_code[:8]
+    user_statement = select(User).where(User.zid == zid)
+    target_user = session.exec(user_statement).first()
+    if not target_user:
+        return {"status": "error", "message": "User account not found"}
+    
+    target_user.total_signature += 1
+    target_user.current_signature += 1
+    session.add(target_user)
+
+    session.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully stamped! {target_user.name} now has {target_user.current_signature} signatures."
     }

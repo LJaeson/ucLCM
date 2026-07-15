@@ -5,6 +5,7 @@ import finishLogoWebm from './assets/finish_logo_v1.webm';
 import finishLogoMov from './assets/finish_logo_v1.mov';
 import FoodDrawer from './components/FoodDrawer';
 import Passport from './components/Passport';
+import Rating from './components/Rating';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 const VITE_DISCORD_LINK = import.meta.env.VITE_DISCORD_LINK;
@@ -139,15 +140,19 @@ export default function SuccessPage() {
                             // A fallback in case the data is still loading
                             <p className="mt-4 animate-pulse text-white">Checking your status...</p>
                         )}
+                        
 
                         <a 
                             href={VITE_DISCORD_LINK}
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className='animate-fade-in font-["Zain"] animate-slow-color text-medium underline mt-4'
+                            className='z-10 animate-fade-in font-["Zain"] animate-slow-color text-medium underline mt-4'
                         >
                             join us in discord!
                         </a>
+
+                        {qrcode && <Rating />}
+
 
                     </div>
                 )}
