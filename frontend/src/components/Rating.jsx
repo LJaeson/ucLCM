@@ -86,7 +86,7 @@ export default function Rating() {
               </div>
             ) : (
               <div className="font-['Zain']">
-                <h2 className="font-['Bebas_Neue'] text-3xl tracking-widest text-white text-center">How do we do?</h2>
+                <h2 className="font-['Bebas_Neue'] text-3xl tracking-widest text-white text-center">How did we do?</h2>
                 <p className="text-center font-medium text-white mt-1">Your voice is really important!</p>
 
                 <div className="mt-5">
