@@ -95,7 +95,7 @@ export default function SuccessPage() {
     return (
         <div className='w-screen h-dvh bg-[#213C51] flex flex-col'>
             <div className='self-center max-w-200 w-screen'>
-                <div className='flex w-[100%] justify-center pt-[12vh] pb-[1vh]'>
+                <div className={`flex w-[100%] justify-center pt-[12vh] pb-[1vh] ${qrcode ? 'hidden' : ''}`}>
                     <video 
                         className={`w-[40vw] max-w-50 h-auto transition-opacity duration-1200 ease-in-out ${
                             fadeIn ? 'opacity-100' : 'opacity-0'
@@ -115,9 +115,9 @@ export default function SuccessPage() {
                 </div>
 
                 {/* Only show this div if videoDone is true */}
-                {videoDone && (
+                {(videoDone || qrcode) && (
                     <div className='flex flex-col items-center'>
-                        <h2 className="animate-fade-in font-bebas text-white text-4xl mt-6 tracking-widest">
+                        <h2 className={`animate-fade-in font-bebas text-white text-4xl tracking-widest ${qrcode ? 'mt-20' : 'mt-6'}`}>
                             THANK YOU!
                         </h2>
 
@@ -158,12 +158,12 @@ export default function SuccessPage() {
                 )}
             </div>
 
-            {videoDone && (
+            {(videoDone || qrcode) && (
                 // <div className={`transition-opacity duration-[1200ms] ease-in-out ${drawerFade ? 'opacity-100' : 'opacity-0'}`}>
                     <FoodDrawer/>
                 // </div>
             )}
-            {videoDone && (
+            {(videoDone || qrcode) && (
                     <Passport/>
             )}
         </div>
