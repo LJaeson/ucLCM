@@ -17,6 +17,7 @@ if DATABASE_URL.startswith("postgres://"):
 ADDRESS = os.getenv("ADDRESS")
 PEERLEADER_PASSWORD = os.getenv("PEERLEADER_PASSWORD")
 IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
+WAITING_MINUTE = os.getenv("WAITING_MINUTE") == 30
 
 PROGRAM_LABELS = {
     1: "Diploma",
@@ -170,7 +171,7 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 def get_record_seconds_left_by_row(row: CheckIn):
     curr_time = get_current_time()
 
-    target_time = row.time + timedelta(minutes=30)
+    target_time = row.time + timedelta(minutes=WAITING_MINUTE)
     time_left = target_time - curr_time
 
     return int(time_left.total_seconds())
