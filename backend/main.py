@@ -170,7 +170,7 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 def get_record_seconds_left_by_row(row: CheckIn):
     curr_time = get_current_time()
 
-    target_time = row.time + timedelta(minutes=30)
+    target_time = row.time + timedelta(minutes=1)
     time_left = target_time - curr_time
 
     return int(time_left.total_seconds())
@@ -479,6 +479,31 @@ async def send_feedback(data: dict, request: Request, session: Session = Depends
     session.commit()
 
     return {"status": "success"}
+
+
+@app.get("/status/feedback")
+async def feedback_status(request: Request, session: Session = Depends(get_session)):
+    user = find_user_by_session(request, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    curr_time = get_current_time()
+
+    statement = (
+        select(Feedback)
+        .where(
+            Feedback.zid == user.zid, 
+            func.date(Feedback.time) == curr_time.date()
+        )
+        .order_by(desc(Feedback.time))
+    )
+
+    row = session.exec(statement).first()
+    if row and ((curr_time.hour < 17 and row.time.hour < 17) or (curr_time.hour >= 17 and row.time.hour >= 17)):
+        return {"recorded": True}
+
+    return {"recorded": False}
+    
 
 
 @app.get("/status/food")

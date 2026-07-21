@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import "tailwindcss";
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
@@ -26,6 +26,35 @@ export default function Rating() {
     { label: "What could we do better?", value: message2, setValue: setMessage2 },
     { label: "Anything else you'd like to share?", value: message3, setValue: setMessage3 },
   ];
+
+
+  // used to fetch if the feedback and feedback is already in the server
+  const fetchFeedbackStatus = useCallback(async () => {
+      try {
+          const response = await fetch(`${ADDRESS}/status/feedback`, {
+              method: "GET",
+              credentials: "include", 
+          });
+
+          if (response.ok) {
+              const data = await response.json();
+              
+              if (data.recorded) {
+                setIsSubmitted(true);
+              }
+          }
+      } catch (error) {
+          console.error("Could not fetch feedback status:", error);
+      }
+  }, []);
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+        await fetchFeedbackStatus();
+    };
+
+    loadInitialData();
+  }, [fetchFeedbackStatus]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
