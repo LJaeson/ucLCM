@@ -170,7 +170,7 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 def get_record_seconds_left_by_row(row: CheckIn):
     curr_time = get_current_time()
 
-    target_time = row.time + timedelta(minutes=1)
+    target_time = row.time + timedelta(minutes=30)
     time_left = target_time - curr_time
 
     return int(time_left.total_seconds())
