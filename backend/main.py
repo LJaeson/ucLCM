@@ -586,6 +586,8 @@ async def admin_analytics(
     request: Request,
     month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
     timeInADay: str | None = Query(default=None, description="Optional, the string either 'afternoon' or 'evening'"),
+    program: str | None = Query(default=None, description="Optional program label filter, e.g. 'Diploma'"),
+    helpTopic: str | None = Query(default=None, description="Optional help topic label filter, e.g. 'Maths'"),
     session: Session = Depends(get_session),
 ):
     validate_admin_session(request, session, "Admin")
@@ -615,6 +617,29 @@ async def admin_analytics(
 
     program_by_zid = {user.zid: PROGRAM_LABELS.get(user.program, "Unknown") for user in users}
 
+    def get_topic_names(checkin: CheckIn) -> list[str]:
+        helps_value = (checkin.helps or "").strip()
+        topic_ids = [part.strip() for part in helps_value.split(",") if part.strip()]
+        if not topic_ids:
+            return ["No specific"]
+        return [HELP_TOPIC_LABELS.get(topic_id, "Other") for topic_id in topic_ids]
+
+    checkins_matching_program = (
+        [checkin for checkin in checkins if program_by_zid.get(checkin.zid, "Unknown") == program]
+        if program else checkins
+    )
+    checkins_matching_topic = (
+        [checkin for checkin in checkins if helpTopic in get_topic_names(checkin)]
+        if helpTopic else checkins
+    )
+    # each chart ignores its own filter so every bar stays visible for switching selection
+    program_chart_checkins = checkins_matching_topic
+    topic_chart_checkins = checkins_matching_program
+    checkins = (
+        [checkin for checkin in checkins_matching_program if helpTopic in get_topic_names(checkin)]
+        if helpTopic else checkins_matching_program
+    )
+
     attendance_by_program: dict[str, int] = {}
     attendance_by_month: dict[str, int] = {}
     help_topic_counts: dict[str, int] = {}
@@ -623,21 +648,13 @@ async def admin_analytics(
         month_key = checkin.time.strftime("%Y-%m")
         attendance_by_month[month_key] = attendance_by_month.get(month_key, 0) + 1
 
-    for checkin in checkins:
-
+    for checkin in program_chart_checkins:
         program_name = program_by_zid.get(checkin.zid, "Unknown")
         attendance_by_program[program_name] = attendance_by_program.get(program_name, 0) + 1
 
-        helps_value = (checkin.helps or "").strip()
-        if not helps_value:
-            help_topic_counts["No specific"] = help_topic_counts.get("No specific", 0) + 1
-        else:
-            topic_ids = [part.strip() for part in helps_value.split(",") if part.strip()]
-            if not topic_ids:
-                help_topic_counts["No specific"] = help_topic_counts.get("No specific", 0) + 1
-            for topic_id in topic_ids:
-                topic_name = HELP_TOPIC_LABELS.get(topic_id, "Other")
-                help_topic_counts[topic_name] = help_topic_counts.get(topic_name, 0) + 1
+    for checkin in topic_chart_checkins:
+        for topic_name in get_topic_names(checkin):
+            help_topic_counts[topic_name] = help_topic_counts.get(topic_name, 0) + 1
 
     frequency_once = 0
     frequency_two_to_five = 0
@@ -705,13 +722,15 @@ async def admin_analytics(
     total_students = len(student_zids)
     total_signed = sum(1 for checkin in checkins if checkin.signed)
     total_food_collected = sum(1 for checkin in checkins if checkin.food)
-    if selected_month:
+    if selected_month or timeInADay or program or helpTopic:
         total_hoodies_collected = sum(user_by_zid[zid].hoodies_collected for zid in student_zids if zid in user_by_zid)
     else:
         total_hoodies_collected = sum(user.hoodies_collected for user in users)
 
     return {
         "selected_month": selected_month,
+        "selected_program": program,
+        "selected_help_topic": helpTopic,
         "summary": {
             "total_checkins": total_checkins,
             "total_students": total_students,
