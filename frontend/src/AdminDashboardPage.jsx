@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
-function buildAnalyticsUrl(month, timeInADay) {
-    let query = month ? `?month=${encodeURIComponent(month)}` : '';
-    query += timeInADay ? `${query ? '&' : '?'}timeInADay=${encodeURIComponent(timeInADay)}` : '';
+function buildAnalyticsUrl({ month, timeInADay, program, helpTopic }) {
+    const params = new URLSearchParams();
+    if (month) params.set('month', month);
+    if (timeInADay) params.set('timeInADay', timeInADay);
+    if (program) params.set('program', program);
+    if (helpTopic) params.set('helpTopic', helpTopic);
+    const queryString = params.toString();
+    const query = queryString ? `?${queryString}` : '';
 
     if (ADDRESS && /^https?:\/\//.test(ADDRESS)) {
         return `${ADDRESS}/admin/analytics${query}`;
@@ -120,6 +125,8 @@ export default function AdminDashboardPage() {
     const [analytics, setAnalytics] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedTimeInADay, setSelectedTimeInADay] = useState(null);
+    const [selectedProgram, setSelectedProgram] = useState(null);
+    const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
 
     const selectedTimeLabel = selectedTimeInADay === 'afternoon'
         ? 'Afternoon (2-5pm)'
@@ -127,15 +134,30 @@ export default function AdminDashboardPage() {
             ? 'Evening (5-8pm)'
             : null;
 
+    const activeFilterLabels = [
+        selectedMonth,
+        selectedTimeLabel,
+        selectedProgram,
+        selectedHelpTopic ? `Topic: ${selectedHelpTopic}` : null,
+    ].filter(Boolean);
+
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
                 setLoading(true);
                 setError('');
-                const response = await fetch(buildAnalyticsUrl(selectedMonth, selectedTimeInADay), {
-                    method: 'GET',
-                    credentials: 'include',
-                });
+                const response = await fetch(
+                    buildAnalyticsUrl({
+                        month: selectedMonth,
+                        timeInADay: selectedTimeInADay,
+                        program: selectedProgram,
+                        helpTopic: selectedHelpTopic,
+                    }),
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    },
+                );
 
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -154,7 +176,7 @@ export default function AdminDashboardPage() {
         };
 
         fetchAnalytics();
-    }, [selectedMonth, selectedTimeInADay]);
+    }, [selectedMonth, selectedTimeInADay, selectedProgram, selectedHelpTopic]);
 
     const handleTimeBarClick = (itemName) => {
         const nextTimeInADay = itemName === 'Afternoon (2-5pm)' ? 'afternoon' : 'evening';
@@ -180,16 +202,18 @@ export default function AdminDashboardPage() {
 
                 {!loading && !error && analytics && (
                     <div className="space-y-6">
-                        {(selectedMonth || selectedTimeLabel) && (
+                        {activeFilterLabels.length > 0 && (
                             <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
                                 <span>
-                                    Filtered to {selectedMonth || 'all months'}{selectedMonth && selectedTimeLabel ? ' and ' : ''}{selectedTimeLabel || ''}
+                                    Filtered to {activeFilterLabels.join(', ')}
                                 </span>
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setSelectedMonth(null);
                                         setSelectedTimeInADay(null);
+                                        setSelectedProgram(null);
+                                        setSelectedHelpTopic(null);
                                     }}
                                     className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100"
                                 >
@@ -221,6 +245,10 @@ export default function AdminDashboardPage() {
                                 data={analytics.attendance_by_program || []}
                                 maxItems={6}
                                 barColors={['bg-emerald-600', 'bg-sky-600', 'bg-amber-500', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
+                                onItemClick={(item) =>
+                                    setSelectedProgram((currentProgram) => (currentProgram === item.name ? null : item.name))
+                                }
+                                activeItemName={selectedProgram}
                             />
                             <HorizontalBarChart
                                 title="Attendance Frequency"
@@ -250,6 +278,10 @@ export default function AdminDashboardPage() {
                                 data={analytics.help_topics || []}
                                 maxItems={10}
                                 barColors={['bg-amber-500', 'bg-emerald-600', 'bg-sky-600', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
+                                onItemClick={(item) =>
+                                    setSelectedHelpTopic((currentTopic) => (currentTopic === item.name ? null : item.name))
+                                }
+                                activeItemName={selectedHelpTopic}
                             />
 
                             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
