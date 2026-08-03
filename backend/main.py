@@ -760,6 +760,110 @@ async def admin_analytics(
 
 
 
+@app.get("/admin/feedback")
+async def admin_feedback(
+    request: Request,
+    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
+    timeInADay: str | None = Query(default=None, description="Optional, the string either 'afternoon' or 'evening'"),
+    rating: int | None = Query(default=None, ge=1, le=5, description="Optional star rating filter, 1-5"),
+    limit: int = Query(default=50, ge=1, le=200, description="How many feedback rows to return"),
+    offset: int = Query(default=0, ge=0, description="How many feedback rows to skip"),
+    session: Session = Depends(get_session),
+):
+    validate_admin_session(request, session, "Admin")
+
+    all_feedback = session.exec(select(Feedback).order_by(desc(Feedback.time))).all()
+    users = session.exec(select(User)).all()
+    user_by_zid = {user.zid: user for user in users}
+
+    selected_month = None
+    if month:
+        try:
+            selected_month = datetime.strptime(month, "%Y-%m").strftime("%Y-%m")
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.") from error
+
+    feedback_rows = all_feedback
+    if selected_month:
+        feedback_rows = [row for row in feedback_rows if row.time.strftime("%Y-%m") == selected_month]
+
+    if timeInADay == 'afternoon':
+        feedback_rows = [row for row in feedback_rows if 14 <= row.time.hour < 17]
+    elif timeInADay == 'evening':
+        feedback_rows = [row for row in feedback_rows if 17 <= row.time.hour < 20]
+
+    # the rating chart and the summary ignore the rating filter so every bar stays visible for switching selection
+    rating_counts = {star: 0 for star in range(1, 6)}
+    for row in feedback_rows:
+        if row.rating in rating_counts:
+            rating_counts[row.rating] += 1
+
+    rated_rows = [row for row in feedback_rows if row.rating in rating_counts]
+    total_feedback = len(feedback_rows)
+    average_rating = round(sum(row.rating for row in rated_rows) / len(rated_rows), 2) if rated_rows else 0
+
+    def get_messages(row: Feedback) -> list[str]:
+        return [message.strip() for message in (row.message, row.message2, row.message3) if message and message.strip()]
+
+    total_with_comments = sum(1 for row in feedback_rows if get_messages(row))
+
+    feedback_by_month: dict[str, list[int]] = {}
+    for row in all_feedback:
+        if row.rating not in rating_counts:
+            continue
+        month_key = row.time.strftime("%Y-%m")
+        feedback_by_month.setdefault(month_key, []).append(row.rating)
+
+    rating_by_month_result = [
+        {
+            "month": month_key,
+            "count": len(ratings),
+            "average": round(sum(ratings) / len(ratings), 2),
+        }
+        for month_key, ratings in sorted(feedback_by_month.items())[-12:]
+    ]
+
+    if rating:
+        feedback_rows = [row for row in feedback_rows if row.rating == rating]
+
+    page_rows = feedback_rows[offset:offset + limit]
+    items = [
+        {
+            "id": row.id,
+            "zid": row.zid,
+            "name": user_by_zid[row.zid].name if row.zid in user_by_zid else "Unknown",
+            "program": PROGRAM_LABELS.get(user_by_zid[row.zid].program, "Unknown") if row.zid in user_by_zid else "Unknown",
+            "rating": row.rating,
+            "message": row.message,
+            "message2": row.message2,
+            "message3": row.message3,
+            "time": row.time.isoformat(),
+            "session": "Afternoon (2-5pm)" if 14 <= row.time.hour < 17 else ("Evening (5-8pm)" if 17 <= row.time.hour < 20 else "Other"),
+        }
+        for row in page_rows
+    ]
+
+    return {
+        "selected_month": selected_month,
+        "selected_rating": rating,
+        "summary": {
+            "total_feedback": total_feedback,
+            "average_rating": average_rating,
+            "total_with_comments": total_with_comments,
+            "response_rate_denominator": len(rated_rows),
+        },
+        "rating_distribution": [
+            {"name": f"{star} star{'s' if star > 1 else ''}", "rating": star, "count": rating_counts[star]}
+            for star in range(5, 0, -1)
+        ],
+        "rating_by_month": rating_by_month_result,
+        "total_matching": len(feedback_rows),
+        "limit": limit,
+        "offset": offset,
+        "items": items,
+    }
+
+
 @app.post("/admin/modify")
 async def admin_modify(
     data: dict,
