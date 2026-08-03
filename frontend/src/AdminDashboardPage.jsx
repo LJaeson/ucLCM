@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AdminFeedbackPanel from './components/AdminFeedbackPanel';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -308,6 +309,8 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <AdminFeedbackPanel month={selectedMonth} timeInADay={selectedTimeInADay} />
                     </div>
                 )}
             </div>
