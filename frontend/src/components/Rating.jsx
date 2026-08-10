@@ -20,6 +20,7 @@ export default function Rating() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState("");
+  const [submittedTitle, setSubmittedTitle] = useState("");
 
   const textQuestions = [
     { label: "What was the most helpful part of the session?", value: message, setValue: setMessage },
@@ -85,6 +86,7 @@ export default function Rating() {
       if (response.ok) {
         const data = await response.json();
         if (data.status === "success") {
+          setSubmittedTitle("Thank you!");
           setSubmittedMessage("Thanks for your feedback, we really appreciate it!");
         } else {
           setSubmittedMessage("You have already shared your feedback for this session.");
@@ -110,7 +112,7 @@ export default function Rating() {
           <div className="bg-linear-to-b from-[#210C70]/0 to-[#0c4870] to-45% w-[100dvw] min-h-[110dvh] p-6 pt-20 animate-fade-in -mt-10">
             {isSubmitted ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center">
-                <h2 className="font-['Bebas_Neue'] text-4xl tracking-widest text-white">THANK YOU!</h2>
+                <h2 className="font-['Bebas_Neue'] text-4xl tracking-widest text-white">{submittedTitle}</h2>
                 <p className="font-['Zain'] font-medium text-white">{submittedMessage}</p>
               </div>
             ) : (
