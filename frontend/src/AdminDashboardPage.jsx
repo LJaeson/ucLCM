@@ -19,6 +19,12 @@ function buildAnalyticsUrl({ month, timeInADay, program, helpTopic }) {
     return `/api/admin/analytics${query}`;
 }
 
+function formatMonthLabel(monthValue) {
+    const [year, month] = monthValue.split('-');
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
+}
+
 function MetricCard({ label, value }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -79,8 +85,10 @@ function HorizontalBarChart({
     );
 }
 
-function VerticalBars({ title, data, selectedMonth, onSelectMonth }) {
+function VerticalBars({ title, data, selectedMonths, onChangeMonths }) {
     const maxValue = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
+    const monthValues = useMemo(() => data.map((item) => item.month), [data]);
+    const [anchorMonth, setAnchorMonth] = useState(null);
 
     const formatMonth = (monthValue) => {
         const [year, month] = monthValue.split('-');
@@ -88,32 +96,95 @@ function VerticalBars({ title, data, selectedMonth, onSelectMonth }) {
         return new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date);
     };
 
+    const handleMonthClick = (event, monthValue) => {
+        // shift-click extends the selection from the last clicked month to this one
+        const anchorIndex = monthValues.indexOf(anchorMonth);
+        if (event.shiftKey && anchorIndex !== -1) {
+            const clickedIndex = monthValues.indexOf(monthValue);
+            const range = monthValues.slice(
+                Math.min(anchorIndex, clickedIndex),
+                Math.max(anchorIndex, clickedIndex) + 1,
+            );
+            onChangeMonths([...new Set([...selectedMonths, ...range])].sort());
+            return;
+        }
+
+        setAnchorMonth(monthValue);
+        onChangeMonths(
+            selectedMonths.includes(monthValue)
+                ? selectedMonths.filter((month) => month !== monthValue)
+                : [...selectedMonths, monthValue].sort(),
+        );
+    };
+
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                        Click months to combine them, shift-click for a range.
+                    </p>
+                </div>
+                {data.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500">
+                            {selectedMonths.length === 0
+                                ? 'All months'
+                                : `${selectedMonths.length} selected`}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAnchorMonth(null);
+                                onChangeMonths([...monthValues].sort());
+                            }}
+                            className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Select all
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAnchorMonth(null);
+                                onChangeMonths([]);
+                            }}
+                            disabled={selectedMonths.length === 0}
+                            className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                )}
+            </div>
             {data.length === 0 ? (
                 <p className="mt-4 text-sm text-slate-500">No data available.</p>
             ) : (
                 <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 xl:grid-cols-12">
-                    {data.map((item) => (
-                        <button
-                            key={item.month}
-                            type="button"
-                            onClick={() => onSelectMonth(item.month)}
-                            className="flex flex-col items-center justify-end"
-                        >
-                            <div className="mb-2 text-[10px] text-slate-500">{item.count}</div>
-                            <div className="flex h-36 w-full items-end rounded bg-slate-100 px-1">
-                                <div
-                                    className={`w-full rounded ${selectedMonth === item.month ? 'bg-indigo-600' : 'bg-sky-600'}`}
-                                    style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
-                                />
-                            </div>
-                            <div className={`mt-2 text-[10px] ${selectedMonth === item.month ? 'font-semibold text-indigo-700' : 'text-slate-600'}`}>
-                                {formatMonth(item.month)}
-                            </div>
-                        </button>
-                    ))}
+                    {data.map((item) => {
+                        const isSelected = selectedMonths.includes(item.month);
+
+                        return (
+                            <button
+                                key={item.month}
+                                type="button"
+                                onClick={(event) => handleMonthClick(event, item.month)}
+                                aria-pressed={isSelected}
+                                className="flex flex-col items-center justify-end focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            >
+                                <div className="mb-2 text-[10px] text-slate-500">{item.count}</div>
+                                <div className={`flex h-36 w-full items-end rounded px-1 ${isSelected ? 'bg-indigo-100 ring-2 ring-indigo-500' : 'bg-slate-100'}`}>
+                                    <div
+                                        className={`w-full rounded ${isSelected ? 'bg-indigo-600' : 'bg-sky-600'}`}
+                                        style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
+                                    />
+                                </div>
+                                <div className={`mt-2 text-[10px] ${isSelected ? 'font-semibold text-indigo-700' : 'text-slate-600'}`}>
+                                    {formatMonth(item.month)}
+                                </div>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -124,10 +195,13 @@ export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [analytics, setAnalytics] = useState(null);
-    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedMonths, setSelectedMonths] = useState([]);
     const [selectedTimeInADay, setSelectedTimeInADay] = useState(null);
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
+
+    // the API takes one or more months as a comma separated list
+    const monthsParam = selectedMonths.join(',');
 
     const selectedTimeLabel = selectedTimeInADay === 'afternoon'
         ? 'Afternoon (2-5pm)'
@@ -135,8 +209,14 @@ export default function AdminDashboardPage() {
             ? 'Evening (5-8pm)'
             : null;
 
+    const selectedMonthsLabel = selectedMonths.length === 0
+        ? null
+        : selectedMonths.length <= 3
+            ? selectedMonths.map(formatMonthLabel).join(' + ')
+            : `${selectedMonths.length} months (${formatMonthLabel(selectedMonths[0])} - ${formatMonthLabel(selectedMonths[selectedMonths.length - 1])})`;
+
     const activeFilterLabels = [
-        selectedMonth,
+        selectedMonthsLabel,
         selectedTimeLabel,
         selectedProgram,
         selectedHelpTopic ? `Topic: ${selectedHelpTopic}` : null,
@@ -149,7 +229,7 @@ export default function AdminDashboardPage() {
                 setError('');
                 const response = await fetch(
                     buildAnalyticsUrl({
-                        month: selectedMonth,
+                        month: monthsParam,
                         timeInADay: selectedTimeInADay,
                         program: selectedProgram,
                         helpTopic: selectedHelpTopic,
@@ -177,7 +257,7 @@ export default function AdminDashboardPage() {
         };
 
         fetchAnalytics();
-    }, [selectedMonth, selectedTimeInADay, selectedProgram, selectedHelpTopic]);
+    }, [monthsParam, selectedTimeInADay, selectedProgram, selectedHelpTopic]);
 
     const handleTimeBarClick = (itemName) => {
         const nextTimeInADay = itemName === 'Afternoon (2-5pm)' ? 'afternoon' : 'evening';
@@ -211,7 +291,7 @@ export default function AdminDashboardPage() {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setSelectedMonth(null);
+                                        setSelectedMonths([]);
                                         setSelectedTimeInADay(null);
                                         setSelectedProgram(null);
                                         setSelectedHelpTopic(null);
@@ -234,10 +314,8 @@ export default function AdminDashboardPage() {
                         <VerticalBars
                             title="Attendance by Month"
                             data={analytics.attendance_by_month || []}
-                            selectedMonth={selectedMonth}
-                            onSelectMonth={(monthValue) =>
-                                setSelectedMonth((currentMonth) => (currentMonth === monthValue ? null : monthValue))
-                            }
+                            selectedMonths={selectedMonths}
+                            onChangeMonths={setSelectedMonths}
                         />
 
                         <div className="grid gap-4 lg:grid-cols-2">
@@ -310,7 +388,7 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
 
-                        <AdminFeedbackPanel month={selectedMonth} timeInADay={selectedTimeInADay} />
+                        <AdminFeedbackPanel months={monthsParam} timeInADay={selectedTimeInADay} />
                     </div>
                 )}
             </div>

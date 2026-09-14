@@ -10,9 +10,9 @@ const QUESTION_LABELS = {
     message3: 'Anything else',
 };
 
-function buildFeedbackUrl({ month, timeInADay, rating, limit, offset }) {
+function buildFeedbackUrl({ months, timeInADay, rating, limit, offset }) {
     const params = new URLSearchParams();
-    if (month) params.set('month', month);
+    if (months) params.set('month', months);
     if (timeInADay) params.set('timeInADay', timeInADay);
     if (rating) params.set('rating', String(rating));
     params.set('limit', String(limit));
@@ -161,7 +161,8 @@ function FeedbackCard({ item }) {
     );
 }
 
-export default function AdminFeedbackPanel({ month = null, timeInADay = null }) {
+// months is a comma separated list of YYYY-MM values, empty when every month is included
+export default function AdminFeedbackPanel({ months = '', timeInADay = null }) {
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState('');
@@ -172,7 +173,7 @@ export default function AdminFeedbackPanel({ month = null, timeInADay = null }) 
 
     const fetchFeedback = useCallback(async (offset) => {
         const response = await fetch(
-            buildFeedbackUrl({ month, timeInADay, rating: selectedRating, limit: PAGE_SIZE, offset }),
+            buildFeedbackUrl({ months, timeInADay, rating: selectedRating, limit: PAGE_SIZE, offset }),
             { method: 'GET', credentials: 'include' },
         );
 
@@ -184,7 +185,7 @@ export default function AdminFeedbackPanel({ month = null, timeInADay = null }) 
         }
 
         return response.json();
-    }, [month, timeInADay, selectedRating]);
+    }, [months, timeInADay, selectedRating]);
 
     useEffect(() => {
         let isCurrent = true;

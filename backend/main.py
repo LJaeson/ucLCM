@@ -167,6 +167,25 @@ def validate_admin_session(request: Request, session: Session, role: str | None 
 
     return leader
 
+def parse_selected_months(month: str | None):
+    # the month filter accepts one month or a comma separated list, e.g. "2026-03,2026-04"
+    if not month:
+        return []
+
+    selected_months = []
+    for part in month.split(","):
+        raw_month = part.strip()
+        if not raw_month:
+            continue
+        try:
+            normalised_month = datetime.strptime(raw_month, "%Y-%m").strftime("%Y-%m")
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.") from error
+        if normalised_month not in selected_months:
+            selected_months.append(normalised_month)
+
+    return sorted(selected_months)
+
 def get_record_seconds_left_by_row(row: CheckIn):
     curr_time = get_current_time()
 
@@ -584,7 +603,7 @@ async def admin_checkAdmin(
 @app.get("/admin/analytics")
 async def admin_analytics(
     request: Request,
-    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
+    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format, comma separated for several months"),
     timeInADay: str | None = Query(default=None, description="Optional, the string either 'afternoon' or 'evening'"),
     program: str | None = Query(default=None, description="Optional program label filter, e.g. 'Diploma'"),
     helpTopic: str | None = Query(default=None, description="Optional help topic label filter, e.g. 'Maths'"),
@@ -595,17 +614,12 @@ async def admin_analytics(
     users = session.exec(select(User)).all()
     all_checkins = session.exec(select(CheckIn)).all()
 
-    selected_month = None
-    if month:
-        try:
-            selected_month = datetime.strptime(month, "%Y-%m").strftime("%Y-%m")
-        except ValueError as error:
-            raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.") from error
+    selected_months = parse_selected_months(month)
 
     checkins = all_checkins
-    if selected_month:
-        checkins = [checkin for checkin in all_checkins if checkin.time.strftime("%Y-%m") == selected_month]
-    
+    if selected_months:
+        checkins = [checkin for checkin in all_checkins if checkin.time.strftime("%Y-%m") in selected_months]
+
     if timeInADay:
         if timeInADay == 'afternoon':
             checkins = [checkin for checkin in checkins if 14 <= checkin.time.hour < 17]
@@ -722,13 +736,13 @@ async def admin_analytics(
     total_students = len(student_zids)
     total_signed = sum(1 for checkin in checkins if checkin.signed)
     total_food_collected = sum(1 for checkin in checkins if checkin.food)
-    if selected_month or timeInADay or program or helpTopic:
+    if selected_months or timeInADay or program or helpTopic:
         total_hoodies_collected = sum(user_by_zid[zid].hoodies_collected for zid in student_zids if zid in user_by_zid)
     else:
         total_hoodies_collected = sum(user.hoodies_collected for user in users)
 
     return {
-        "selected_month": selected_month,
+        "selected_months": selected_months,
         "selected_program": program,
         "selected_help_topic": helpTopic,
         "summary": {
@@ -763,7 +777,7 @@ async def admin_analytics(
 @app.get("/admin/feedback")
 async def admin_feedback(
     request: Request,
-    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format"),
+    month: str | None = Query(default=None, description="Optional month filter in YYYY-MM format, comma separated for several months"),
     timeInADay: str | None = Query(default=None, description="Optional, the string either 'afternoon' or 'evening'"),
     rating: int | None = Query(default=None, ge=1, le=5, description="Optional star rating filter, 1-5"),
     limit: int = Query(default=50, ge=1, le=200, description="How many feedback rows to return"),
@@ -776,16 +790,11 @@ async def admin_feedback(
     users = session.exec(select(User)).all()
     user_by_zid = {user.zid: user for user in users}
 
-    selected_month = None
-    if month:
-        try:
-            selected_month = datetime.strptime(month, "%Y-%m").strftime("%Y-%m")
-        except ValueError as error:
-            raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.") from error
+    selected_months = parse_selected_months(month)
 
     feedback_rows = all_feedback
-    if selected_month:
-        feedback_rows = [row for row in feedback_rows if row.time.strftime("%Y-%m") == selected_month]
+    if selected_months:
+        feedback_rows = [row for row in feedback_rows if row.time.strftime("%Y-%m") in selected_months]
 
     if timeInADay == 'afternoon':
         feedback_rows = [row for row in feedback_rows if 14 <= row.time.hour < 17]
@@ -844,7 +853,7 @@ async def admin_feedback(
     ]
 
     return {
-        "selected_month": selected_month,
+        "selected_months": selected_months,
         "selected_rating": rating,
         "summary": {
             "total_feedback": total_feedback,
