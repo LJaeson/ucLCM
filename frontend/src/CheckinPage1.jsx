@@ -8,7 +8,7 @@ import Popup from './components/Popup';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS
 
-export default function CheckinPage({setFinish, setStart}) {
+export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
   const [selectedProgram, setSelectedProgram] = useState();
   const [selectedHelps, setselectedHelps] = useState([])
 
@@ -143,6 +143,10 @@ export default function CheckinPage({setFinish, setStart}) {
       });
 
       if (response.ok) {
+        // Foundation Studies (2) students who picked Commerce (5) get the flyer
+        if (selectedProgram === 2 && selectedHelps.includes(5)) {
+          setShowFlyer(true);
+        }
         setIsFinished(true);
         // const data = await response.json();
       } else {
