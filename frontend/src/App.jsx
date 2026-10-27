@@ -12,6 +12,7 @@ import AdminRedeemPage from './AdminRedeemPage';
 import AdminLoginSuccessPage from './AdminLoginSuccessPage';
 import AdminDashboardPage from './AdminDashboardPage';
 import AdminModifyPage from './AdminModifyPage';
+import FlyerPopup from './components/FlyerPopup';
 
 const ADDRESS = import.meta.env.VITE_ADDRESS;
 
@@ -21,6 +22,7 @@ function Checkin() {
   const [checkinPage1, setCheckinPage1] = useState(false);
   const [checkinPage2, setCheckinPage2] = useState(false);
   const [successPage, setSuccessPage] = useState(false);
+  const [showFlyer, setShowFlyer] = useState(false);
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -76,9 +78,10 @@ function Checkin() {
 
   return (
     <>
-      {checkinPage1 && <CheckinPage setFinish={setCheckinPage1} setStart={setSuccessPage}/>}
-      {checkinPage2 && <CheckinPage2 setFinish={setCheckinPage2} setStart={setSuccessPage}/>}
+      {checkinPage1 && <CheckinPage setFinish={setCheckinPage1} setStart={setSuccessPage} setShowFlyer={setShowFlyer}/>}
+      {checkinPage2 && <CheckinPage2 setFinish={setCheckinPage2} setStart={setSuccessPage} setShowFlyer={setShowFlyer}/>}
       {successPage && <SuccessPage/>}
+      {successPage && showFlyer && <FlyerPopup onClose={() => setShowFlyer(false)}/>}
     </>
   )
 }

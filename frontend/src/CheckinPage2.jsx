@@ -9,7 +9,7 @@ import Popup from './components/Popup';
 const ADDRESS = import.meta.env.VITE_ADDRESS
 
 
-export default function CheckinPage2({setFinish, setStart}) {
+export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
   const [selectedHelps, setselectedHelps] = useState([])
   const [helpsError, setHelpsError] = useState("");
 
@@ -37,6 +37,7 @@ export default function CheckinPage2({setFinish, setStart}) {
 
   const [name, setName] = useState('');
   const [zid, setZid] = useState('');
+  const [program, setProgram] = useState(null);
   const [isFinished, setIsFinished] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -55,6 +56,7 @@ export default function CheckinPage2({setFinish, setStart}) {
                 if (data.recorded) {
                   setName(data.name);
                   setZid(data.zid);
+                  setProgram(data.program);
                   console.log(`Welcome back, ${data.name}!`);
                 }
             }
@@ -88,6 +90,10 @@ export default function CheckinPage2({setFinish, setStart}) {
       });
 
       if (response.ok) {
+        // Foundation Studies (2) students who picked Commerce (5) get the flyer
+        if (Number(program) === 2 && selectedHelps.includes(5)) {
+          setShowFlyer(true);
+        }
         setIsFinished(true);
         // const data = await response.json();
       } else {

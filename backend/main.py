@@ -570,7 +570,7 @@ async def admin_login(data: dict, response: Response, session: Session = Depends
 
     curr_time = get_current_time()
     
-    expiration_time = curr_time + timedelta(seconds=60 * 60 * 24 * 200)
+    expiration_time = curr_time + timedelta(seconds=60 * 60 * 24 * 500)
     
     new_leader = Admin(
         session_id=leader_session_id,
