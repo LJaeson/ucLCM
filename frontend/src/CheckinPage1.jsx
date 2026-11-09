@@ -49,6 +49,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
   const [name, setName] = useState('');
   const [zid, setZid] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [nameError, setNameError] = useState("");
   const [zidError, setZidError] = useState("");
   const [formError, setFormError] = useState("");
@@ -105,6 +106,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
   // This function runs when the button is clicked
   const handleCheckIn = async (e) => {
     if (e) e.preventDefault();
+    // ignore extra taps while the request is in flight or the pentagon animation is playing
+    if (isSubmitting || isFinished) return;
 
     const isNameValid = validateName(name);
     const isZidValid = validateZid(zid);
@@ -128,6 +131,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     }
 
     // Send the data to the server
+    setIsSubmitting(true);
     try {
       const response = await fetch(`${ADDRESS}/checkin`, {
         method: "POST",
@@ -158,6 +162,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     } catch (error) {
       console.log(error);
       setErrorMessage("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -282,7 +288,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
         <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms] font-["Zain"]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 focus:border-teal-500 focus:text-white active:bg-teal-500 active:text-white"
+            disabled={isSubmitting || isFinished}
+            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 focus:border-teal-500 focus:text-white active:bg-teal-500 active:text-white disabled:opacity-60"
           >
             Check in
           </button>

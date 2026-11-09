@@ -2,14 +2,13 @@ import { useEffect } from 'react';
 
 export default function FlyingPentagon({setFinish, setStart}) {
     useEffect(() => {
-        
-        const timer6 = setTimeout(() => setFinish(false), 2000);
-        const timer7 = setTimeout(() => setStart(true), 2000);
+        // one timer so both pages swap in a single render, two timers can leave a blank frame between them
+        const timer = setTimeout(() => {
+            setFinish(false);
+            setStart(true);
+        }, 2000);
 
-        return () => {
-            clearTimeout(timer6);
-            clearTimeout(timer7);
-        };
+        return () => clearTimeout(timer);
     }, []);
 
 
