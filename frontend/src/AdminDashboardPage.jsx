@@ -355,7 +355,7 @@ export default function AdminDashboardPage() {
                             <HorizontalBarChart
                                 title="Top Help Topics"
                                 data={analytics.help_topics || []}
-                                maxItems={10}
+                                maxItems={11}
                                 barColors={['bg-amber-500', 'bg-emerald-600', 'bg-sky-600', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
                                 onItemClick={(item) =>
                                     setSelectedHelpTopic((currentTopic) => (currentTopic === item.name ? null : item.name))

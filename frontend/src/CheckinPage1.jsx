@@ -17,7 +17,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     { id: 1, title: 'Diploma'},
     { id: 2, title: 'Foundation Studies'},
     { id: 3, title: 'Academic English Program'},
-    { id: 4, title: 'Pre-Masters'}
+    { id: 4, title: 'Pre-Masters'},
+    { id: 5, title: 'Applied Degree'}
   ];
 
   const q2options = [
@@ -29,6 +30,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
     { id: 8, title: 'Academic English'},
+    { id: 9, title: 'Architecture'}
   ]
   ///////////////////////end of question list/////////////////////////////
   const handleSingleToggle = (id) => {
@@ -47,6 +49,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
   const [name, setName] = useState('');
   const [zid, setZid] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [nameError, setNameError] = useState("");
   const [zidError, setZidError] = useState("");
   const [formError, setFormError] = useState("");
@@ -103,6 +106,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
   // This function runs when the button is clicked
   const handleCheckIn = async (e) => {
     if (e) e.preventDefault();
+    // ignore extra taps while the request is in flight or the pentagon animation is playing
+    if (isSubmitting || isFinished) return;
 
     const isNameValid = validateName(name);
     const isZidValid = validateZid(zid);
@@ -126,6 +131,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     }
 
     // Send the data to the server
+    setIsSubmitting(true);
     try {
       const response = await fetch(`${ADDRESS}/checkin`, {
         method: "POST",
@@ -156,6 +162,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     } catch (error) {
       console.log(error);
       setErrorMessage("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -280,7 +288,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
         <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:1100ms] font-["Zain"]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 focus:border-teal-500 focus:text-white active:bg-teal-500 active:text-white"
+            disabled={isSubmitting || isFinished}
+            className="w-[100%] px-8 py-1.5 text-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 focus:border-teal-500 focus:text-white active:bg-teal-500 active:text-white disabled:opacity-60"
           >
             Check in
           </button>

@@ -24,6 +24,7 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
     { id: 8, title: 'Academic English'},
+    { id: 9, title: 'Architecture'}
   ]
   ///////////////////////end of question list/////////////////////////////
 
@@ -39,6 +40,7 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
   const [zid, setZid] = useState('');
   const [program, setProgram] = useState(null);
   const [isFinished, setIsFinished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -71,10 +73,15 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
     
   // This function runs when the button is clicked
   const handleCheckIn = async () => {
-      if (selectedHelps.length === 0) {
+    // ignore extra taps while the request is in flight or the pentagon animation is playing,
+    // otherwise the second request gets a 409 and the error popup shows over the animation
+    if (isSubmitting || isFinished) return;
+
+    if (selectedHelps.length === 0) {
       return setHelpsError("Please select at least one we can help with.");
     }
 
+    setIsSubmitting(true);
     try {
       const response = await fetch(`${ADDRESS}/existcheckin`, {
         method: "POST",
@@ -103,6 +110,8 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
     } catch (error) {
       console.log(error);
       setErrorMessage("Network error. Please check your internet connection.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -162,7 +171,8 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
         <div className='w-[100%] p-3 pb-5 animate-fade-in [animation-fill-mode:both] [animation-delay:700ms] font-["Zain"]'>
           <button 
             onClick={handleCheckIn}
-            className="w-[100%] px-8 py-1.5 font-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500"
+            disabled={isSubmitting || isFinished}
+            className="w-[100%] px-8 py-1.5 font-xl rounded-md bg-teal-500/20 text-[#00ac9a] font-bold transition duration-200 hover:bg-teal-500 hover:text-white border-2 border-teal-500 hover:border-teal-500 disabled:opacity-60"
           >
             Check in
           </button>

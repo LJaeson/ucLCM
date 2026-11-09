@@ -23,7 +23,8 @@ export default function ParticlesBg() {
         background: {
           color: { value: "transparent" }, // Let nav bg show through
         },
-        fpsLimit: 120,
+        // 60 is plenty for slow particles, 120 doubles the work on 120Hz phones
+        fpsLimit: 60,
         interactivity: {
           events: {
             onHover: { enable: true, mode: "grab" },
