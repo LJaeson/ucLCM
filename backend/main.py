@@ -23,6 +23,7 @@ PROGRAM_LABELS = {
     2: "Foundation Studies",
     3: "Academic English Program",
     4: "Pre-Masters",
+    5: "Applied Degree"
 }
 
 HELP_TOPIC_LABELS = {
@@ -34,6 +35,7 @@ HELP_TOPIC_LABELS = {
     "6": "Chemistry",
     "7": "Biology",
     "8": "Academic English",
+    "9": "Architecture",
 }
 
 class CheckIn(SQLModel, table=True):
