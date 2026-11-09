@@ -17,7 +17,8 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     { id: 1, title: 'Diploma'},
     { id: 2, title: 'Foundation Studies'},
     { id: 3, title: 'Academic English Program'},
-    { id: 4, title: 'Pre-Masters'}
+    { id: 4, title: 'Pre-Masters'},
+    { id: 5, title: 'Applied Degree'}
   ];
 
   const q2options = [
@@ -29,6 +30,7 @@ export default function CheckinPage({setFinish, setStart, setShowFlyer}) {
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
     { id: 8, title: 'Academic English'},
+    { id: 9, title: 'Architecture'}
   ]
   ///////////////////////end of question list/////////////////////////////
   const handleSingleToggle = (id) => {

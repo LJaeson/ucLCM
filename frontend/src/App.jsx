@@ -81,7 +81,7 @@ function Checkin() {
       {checkinPage1 && <CheckinPage setFinish={setCheckinPage1} setStart={setSuccessPage} setShowFlyer={setShowFlyer}/>}
       {checkinPage2 && <CheckinPage2 setFinish={setCheckinPage2} setStart={setSuccessPage} setShowFlyer={setShowFlyer}/>}
       {successPage && <SuccessPage/>}
-      {successPage && showFlyer && <FlyerPopup onClose={() => setShowFlyer(false)}/>}
+      {/* {successPage && showFlyer && <FlyerPopup onClose={() => setShowFlyer(false)}/>} */}
     </>
   )
 }

@@ -24,6 +24,7 @@ export default function CheckinPage2({setFinish, setStart, setShowFlyer}) {
     { id: 6, title: 'Chemistry'},
     { id: 7, title: 'Biology'},
     { id: 8, title: 'Academic English'},
+    { id: 9, title: 'Architecture'}
   ]
   ///////////////////////end of question list/////////////////////////////
 
