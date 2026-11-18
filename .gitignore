@@ -33,3 +33,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+# =========================
+# 5. Local preview config
+# =========================
+.claude/launch.json

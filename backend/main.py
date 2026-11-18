@@ -602,6 +602,15 @@ async def admin_checkAdmin(
 ):
     validate_admin_session(request, session, "Admin")
 
+@app.get("/admin/me")
+async def admin_me(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    # the signed-in admin's own name, used to greet them on the dashboard
+    leader = validate_admin_session(request, session)
+    return {"name": leader.name, "role": leader.role}
+
 @app.get("/admin/analytics")
 async def admin_analytics(
     request: Request,
