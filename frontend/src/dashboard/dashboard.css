@@ -1,0 +1,560 @@
+/* Tokens and a few component styles for the redesigned admin dashboard. Scoped under .dash. */
+
+.dash {
+    --bg: #eae9e6;
+    --tile: rgba(250, 249, 247, 0.34);
+    --tile-hover: rgba(255, 255, 255, 0.5);
+    --line: rgba(29, 28, 26, 0.09);
+    --line-strong: rgba(29, 28, 26, 0.16);
+    --ink: #1d1c1a;
+    --ink-2: #57534d;
+    --ink-3: #6f6b64;
+    --bar: #c9c5bd;
+    --bar-hover: #b3aea5;
+    --bar-muted: #dcd9d3;
+    --dark: #403e3a;
+    --accent: #e0672c;
+    --accent-ink: #b84e1a;
+    --accent-soft: rgba(224, 103, 44, 0.12);
+    --up: #4f7428;
+    --down: #c7401f;
+    --track: rgba(29, 28, 26, 0.07);
+
+    position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.dash-mono {
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dash-label {
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+.dash-tnum {
+    font-variant-numeric: tabular-nums;
+}
+
+/* borderless glass: only a faint, wide shadow lifts the tile off the shapes behind it */
+.dash-tile {
+    background: var(--tile);
+    border-radius: 20px;
+    box-shadow: 0 24px 60px -40px rgba(29, 28, 26, 0.28);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    backdrop-filter: blur(22px) saturate(1.2);
+}
+
+.dash-header {
+    background: rgba(234, 233, 230, 0.55);
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    backdrop-filter: blur(18px) saturate(1.15);
+}
+
+/* ---- background shapes ---- */
+
+/* kept faint so the orange never competes with the orange that marks a selection in the charts */
+.dash-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.dash-motif {
+    position: absolute;
+    display: block;
+}
+
+/* hairlines with an orange block sliding along them */
+.dash-motif-lines {
+    left: max(2.5vw, 14px);
+    top: 14vh;
+    width: clamp(110px, 11vw, 190px);
+    height: 64vh;
+}
+
+.dash-motif-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(29, 28, 26, 0.16);
+}
+
+.dash-motif-slider {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 34%;
+    border-top: 1px solid rgba(29, 28, 26, 0.38);
+    animation: dash-slide 18s ease-in-out infinite alternate;
+}
+
+.dash-motif-block {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 25%;
+    width: 50%;
+    background: linear-gradient(to bottom, rgba(224, 103, 44, 0.95), rgba(224, 103, 44, 0.4) 45%, rgba(224, 103, 44, 0));
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+@keyframes dash-slide {
+    from { transform: translateY(0); }
+    to { transform: translateY(190%); }
+}
+
+/* olive half disc swinging on its straight edge */
+.dash-motif-orb {
+    right: 16vw;
+    top: 44vh;
+    width: clamp(200px, 32vh, 360px);
+    height: clamp(200px, 32vh, 360px);
+}
+
+.dash-motif-orb-swing {
+    transform-box: view-box;
+    transform-origin: 100px 100px;
+    animation: dash-swing 22s ease-in-out infinite alternate;
+}
+
+@keyframes dash-swing {
+    from { transform: rotate(-8deg); }
+    to { transform: rotate(14deg); }
+}
+
+/* orange bars fading into olive ones */
+.dash-motif-bars {
+    left: 32vw;
+    bottom: 5vh;
+    width: clamp(170px, 16vw, 270px);
+    height: clamp(170px, 28vh, 290px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dash-motif-bar {
+    position: relative;
+    height: 19%;
+    animation: dash-drift 12s ease-in-out infinite alternate;
+}
+
+.dash-motif-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--pivot) - 46%);
+    width: 46%;
+    background: linear-gradient(to right, rgba(224, 103, 44, 0), rgba(224, 103, 44, 0.9));
+}
+
+.dash-motif-bar.has-green::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--pivot);
+    width: 24%;
+    background: linear-gradient(to right, rgba(141, 154, 90, 0.9), rgba(141, 154, 90, 0));
+}
+
+@keyframes dash-drift {
+    from { transform: translateX(-16px); }
+    to { transform: translateX(22px); }
+}
+
+/* the rising curve along the right edge */
+.dash-motif-curve {
+    right: 0;
+    top: 6vh;
+    width: clamp(110px, 12vw, 210px);
+    height: 72vh;
+    transform-origin: right bottom;
+    animation: dash-rise 26s ease-in-out infinite alternate;
+}
+
+@keyframes dash-rise {
+    from { transform: scaleX(0.88); }
+    to { transform: scaleX(1.06); }
+}
+
+@media (max-width: 767px) {
+    .dash-motif-orb,
+    .dash-motif-bars {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-motif-slider,
+    .dash-motif-orb-swing,
+    .dash-motif-bar,
+    .dash-motif-curve {
+        animation: none;
+    }
+}
+
+.dash-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 10px;
+    background: rgba(29, 28, 26, 0.06);
+}
+
+.dash-seg > button {
+    border-radius: 7px;
+    padding: 5px 12px;
+    color: var(--ink-2);
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.dash-seg > button:hover {
+    color: var(--ink);
+}
+
+.dash-seg > button[aria-pressed='true'],
+.dash-seg > button[aria-selected='true'] {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(29, 28, 26, 0.1);
+}
+
+.dash-btn {
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--ink);
+    transition: background-color 120ms ease;
+}
+
+.dash-btn:hover {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.dash-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.dash :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* the month in progress is drawn hatched so a partial count doesn't read as a drop */
+.dash-hatch {
+    background-color: var(--bar-muted);
+    background-image: repeating-linear-gradient(135deg, var(--bar-hover) 0 1.5px, transparent 1.5px 6px);
+}
+
+.dash-hatch-accent {
+    background-color: rgba(224, 103, 44, 0.45);
+    background-image: repeating-linear-gradient(135deg, var(--accent) 0 1.5px, transparent 1.5px 6px);
+}
+
+/* While a slow load runs, dim what is inside each tile, never a wrapper around the tiles:
+   an ancestor with opacity (or an opacity transition) becomes the tiles' backdrop root,
+   cuts them off from the shapes behind, and the frosted haze disappears.
+   The delay means quick filter clicks never dim at all. */
+.dash-tile > * {
+    transition: opacity 220ms ease;
+}
+
+.dash-refreshing .dash-tile > * {
+    opacity: 0.55;
+    transition: opacity 220ms ease 260ms;
+}
+
+.dash-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(224, 103, 44, 0.5);
+    animation: dash-pulse 2s ease-out infinite;
+}
+
+@keyframes dash-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(224, 103, 44, 0.45); }
+    70% { box-shadow: 0 0 0 7px rgba(224, 103, 44, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(224, 103, 44, 0); }
+}
+
+.dash-fade-in {
+    animation: dash-fade-in 240ms ease-out both;
+}
+
+@keyframes dash-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-live-dot,
+    .dash-fade-in {
+        animation: none;
+    }
+}
+
+/* the native select keeps its keyboard behaviour; only the chrome is restyled */
+.dash-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    padding-right: 18px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+    background-position: calc(100% - 7px) 55%, calc(100% - 3px) 55%;
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+/* ---- opening sequence (IntroSequence.jsx); sizes scale with --k, the centre-to-header ratio ---- */
+
+.dash-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow: hidden;
+    background: var(--bg);
+    cursor: default;
+}
+
+.dash-intro-black {
+    position: absolute;
+    inset: 0;
+    background: #010101;
+    will-change: clip-path;
+}
+
+.dash-intro-lockup {
+    position: absolute;
+    left: calc(50% - var(--k) * 14px);
+    top: calc(50% - var(--k) * 14px);
+    display: flex;
+    align-items: center;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.dash-intro-mark {
+    position: relative;
+    flex: none;
+    width: calc(var(--k) * 28px);
+    height: calc(var(--k) * 28px);
+}
+
+.dash-intro-type {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 64% 47.9%;
+    will-change: transform;
+}
+
+.dash-intro-letter {
+    fill: #f6f6f6;
+    font-family: 'Bebas Neue', 'Geist', sans-serif;
+    transform: translateY(48px);
+}
+
+.dash-intro-logo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: calc(var(--k) * 7px);
+    opacity: 0;
+}
+
+/* the word is clipped at the logo's right edge, so it appears to slide out of it */
+.dash-intro-slot {
+    overflow: hidden;
+    padding-left: calc(var(--k) * 10px);
+}
+
+.dash-intro-word {
+    display: block;
+    font-size: calc(var(--k) * 18px);
+    line-height: calc(var(--k) * 28px);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    white-space: nowrap;
+    color: var(--ink);
+    transform: translateX(-200%);
+}
+
+/* sits just under the word's baseline, aligned with its left edge; clipped at the top so the
+   greeting looks like it slides out from underneath "Study Club" */
+.dash-intro-greeting-slot {
+    position: absolute;
+    left: calc(var(--k) * 38px);
+    top: calc(var(--k) * 23px);
+    overflow: hidden;
+    padding-top: calc(var(--k) * 1px);
+}
+
+.dash-intro-greeting {
+    display: block;
+    max-width: 70vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: calc(var(--k) * 8px);
+    line-height: 1.35;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink-2);
+    transform: translateY(-105%);
+}
+
+.dash-intro-loader {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + var(--k) * 18px + 28px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-50%);
+}
+
+.dash-intro-track {
+    position: relative;
+    width: 140px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--track);
+}
+
+.dash-intro-track::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 40%;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: dash-indeterminate 1.1s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes dash-indeterminate {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(250%); }
+}
+
+/* hooks the reveal animates: columns grow from the baseline, bars sweep from the left */
+.dash-col-bar {
+    transform-origin: bottom;
+}
+
+.dash-grow-x {
+    transform-origin: left;
+}
+
+/* ---- rolling digits (RollingNumber): each digit is a reel of 0-9 that rolls to its value ---- */
+
+.dash-roll {
+    white-space: nowrap;
+}
+
+.dash-roll-reel {
+    display: inline-block;
+    height: 1lh;
+    overflow: hidden;
+    vertical-align: top;
+}
+
+.dash-roll-strip {
+    display: flex;
+    flex-direction: column;
+    transition: transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dash-roll-strip > span {
+    height: 1lh;
+}
+
+/* a reel that has just appeared rolls up from zero */
+@starting-style {
+    .dash-roll-strip {
+        transform: translateY(0%) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-roll-strip {
+        transition: none;
+    }
+}
+
+/* ---- rows that appear and disappear (Collapse): height glides so content below never jumps ---- */
+
+.dash-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dash-collapse[data-open='true'] {
+    grid-template-rows: 1fr;
+}
+
+.dash-collapse-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* the fade sits on the content itself, not on a wrapper, so a glass tile inside keeps its haze */
+.dash-collapse-inner > * > * {
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.dash-collapse[data-open='true'] .dash-collapse-inner > * > * {
+    opacity: 1;
+    transition: opacity 360ms ease 140ms;
+}
+
+/* something small that appears in place, like the Custom range pill */
+.dash-pop-in {
+    animation: dash-pop-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dash-pop-in {
+    from { opacity: 0; transform: scale(0.88); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-collapse,
+    .dash-collapse-inner > * > *,
+    .dash-collapse[data-open='true'] .dash-collapse-inner > * > * {
+        transition: none;
+    }
+
+    .dash-pop-in {
+        animation: none;
+    }
+}

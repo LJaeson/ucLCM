@@ -1,397 +1,60 @@
-import { useEffect, useMemo, useState } from 'react';
-import AdminFeedbackPanel from './components/AdminFeedbackPanel';
+import { useState } from 'react';
+import ClassicDashboard from './dashboard/ClassicDashboard';
+import NewDashboard from './dashboard/NewDashboard';
 
-const ADDRESS = import.meta.env.VITE_ADDRESS;
+const VERSION_STORAGE_KEY = 'adminDashboardVersion';
 
-function buildAnalyticsUrl({ month, timeInADay, program, helpTopic }) {
-    const params = new URLSearchParams();
-    if (month) params.set('month', month);
-    if (timeInADay) params.set('timeInADay', timeInADay);
-    if (program) params.set('program', program);
-    if (helpTopic) params.set('helpTopic', helpTopic);
-    const queryString = params.toString();
-    const query = queryString ? `?${queryString}` : '';
-
-    if (ADDRESS && /^https?:\/\//.test(ADDRESS)) {
-        return `${ADDRESS}/admin/analytics${query}`;
+function readStoredVersion() {
+    try {
+        return localStorage.getItem(VERSION_STORAGE_KEY) === 'classic' ? 'classic' : 'new';
+    } catch {
+        return 'new';
     }
-
-    return `/api/admin/analytics${query}`;
 }
 
-function formatMonthLabel(monthValue) {
-    const [year, month] = monthValue.split('-');
-    const date = new Date(Number(year), Number(month) - 1, 1);
-    return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
-}
-
-function MetricCard({ label, value }) {
-    return (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
-        </div>
-    );
-}
-
-function HorizontalBarChart({
-    title,
-    data,
-    maxItems = 8,
-    barColor = 'bg-sky-600',
-    barColors = [],
-    onItemClick,
-    activeItemName = null,
-}) {
-    const displayData = useMemo(() => data.slice(0, maxItems), [data, maxItems]);
-    const maxValue = useMemo(() => Math.max(...displayData.map((item) => item.count), 1), [displayData]);
+// A small corner triangle that flips between the redesigned and the classic dashboard.
+function VersionToggle({ version, onToggle }) {
+    const target = version === 'new' ? 'classic' : 'new';
+    const label = `Switch to the ${target} dashboard`;
+    const color = version === 'new' ? '#e0672c' : '#94a3b8';
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-            <div className="mt-4 space-y-3">
-                {displayData.length === 0 ? (
-                    <p className="text-sm text-slate-500">No data available.</p>
-                ) : (
-                    displayData.map((item, index) => {
-                        const itemBarColor = barColors.length > 0 ? barColors[index % barColors.length] : barColor;
-                        const isActive = activeItemName === item.name;
-                        const itemClassName = `group block w-full text-left ${onItemClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2' : ''}`;
-
-                        return (
-                            <button
-                                key={item.name}
-                                type="button"
-                                onClick={() => onItemClick?.(item)}
-                                disabled={!onItemClick}
-                                className={itemClassName}
-                            >
-                                <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                                    <span className={`truncate pr-2 ${isActive ? 'font-semibold text-indigo-700' : ''}`}>{item.name}</span>
-                                    <span className={isActive ? 'font-semibold text-indigo-700' : ''}>{item.count}</span>
-                                </div>
-                                <div className={`h-2 rounded ${isActive ? 'bg-indigo-100' : 'bg-slate-100'}`}>
-                                    <div
-                                        className={`h-2 rounded ${itemBarColor} ${isActive ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
-                                        style={{ width: `${Math.max((item.count / maxValue) * 100, 2)}%` }}
-                                    />
-                                </div>
-                            </button>
-                        );
-                    })
-                )}
-            </div>
-        </div>
-    );
-}
-
-function VerticalBars({ title, data, selectedMonths, onChangeMonths }) {
-    const maxValue = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
-    const monthValues = useMemo(() => data.map((item) => item.month), [data]);
-    const [anchorMonth, setAnchorMonth] = useState(null);
-
-    const formatMonth = (monthValue) => {
-        const [year, month] = monthValue.split('-');
-        const date = new Date(Number(year), Number(month) - 1, 1);
-        return new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date);
-    };
-
-    const handleMonthClick = (event, monthValue) => {
-        // shift-click extends the selection from the last clicked month to this one
-        const anchorIndex = monthValues.indexOf(anchorMonth);
-        if (event.shiftKey && anchorIndex !== -1) {
-            const clickedIndex = monthValues.indexOf(monthValue);
-            const range = monthValues.slice(
-                Math.min(anchorIndex, clickedIndex),
-                Math.max(anchorIndex, clickedIndex) + 1,
-            );
-            onChangeMonths([...new Set([...selectedMonths, ...range])].sort());
-            return;
-        }
-
-        setAnchorMonth(monthValue);
-        onChangeMonths(
-            selectedMonths.includes(monthValue)
-                ? selectedMonths.filter((month) => month !== monthValue)
-                : [...selectedMonths, monthValue].sort(),
-        );
-    };
-
-    return (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                    <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-                    <p className="mt-1 text-xs text-slate-500">
-                        Click months to combine them, shift-click for a range.
-                    </p>
-                </div>
-                {data.length > 0 && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">
-                            {selectedMonths.length === 0
-                                ? 'All months'
-                                : `${selectedMonths.length} selected`}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAnchorMonth(null);
-                                onChangeMonths([...monthValues].sort());
-                            }}
-                            className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                            Select all
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAnchorMonth(null);
-                                onChangeMonths([]);
-                            }}
-                            disabled={selectedMonths.length === 0}
-                            className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                )}
-            </div>
-            {data.length === 0 ? (
-                <p className="mt-4 text-sm text-slate-500">No data available.</p>
-            ) : (
-                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 xl:grid-cols-12">
-                    {data.map((item) => {
-                        const isSelected = selectedMonths.includes(item.month);
-
-                        return (
-                            <button
-                                key={item.month}
-                                type="button"
-                                onClick={(event) => handleMonthClick(event, item.month)}
-                                aria-pressed={isSelected}
-                                className="flex flex-col items-center justify-end focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                            >
-                                <div className="mb-2 text-[10px] text-slate-500">{item.count}</div>
-                                <div className={`flex h-36 w-full items-end rounded px-1 ${isSelected ? 'bg-indigo-100 ring-2 ring-indigo-500' : 'bg-slate-100'}`}>
-                                    <div
-                                        className={`w-full rounded ${isSelected ? 'bg-indigo-600' : 'bg-sky-600'}`}
-                                        style={{ height: `${Math.max((item.count / maxValue) * 100, 4)}%` }}
-                                    />
-                                </div>
-                                <div className={`mt-2 text-[10px] ${isSelected ? 'font-semibold text-indigo-700' : 'text-slate-600'}`}>
-                                    {formatMonth(item.month)}
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
+        <button
+            type="button"
+            onClick={onToggle}
+            aria-label={label}
+            title={label}
+            className="group fixed bottom-0 left-0 z-50 h-9 w-9 focus:outline-none"
+        >
+            <span
+                aria-hidden="true"
+                className="absolute bottom-0 left-0 h-[18px] w-[18px] opacity-70 transition-all duration-150 group-hover:h-6 group-hover:w-6 group-hover:opacity-100 group-focus-visible:h-6 group-focus-visible:w-6 group-focus-visible:opacity-100"
+                style={{ background: color, clipPath: 'polygon(0 0, 0 100%, 100% 100%)' }}
+            />
+            <span className="pointer-events-none absolute bottom-2 left-8 whitespace-nowrap rounded-md bg-slate-900/85 px-2 py-1 font-mono text-[11px] uppercase tracking-wider text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                {target} view
+            </span>
+        </button>
     );
 }
 
 export default function AdminDashboardPage() {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [analytics, setAnalytics] = useState(null);
-    const [selectedMonths, setSelectedMonths] = useState([]);
-    const [selectedTimeInADay, setSelectedTimeInADay] = useState(null);
-    const [selectedProgram, setSelectedProgram] = useState(null);
-    const [selectedHelpTopic, setSelectedHelpTopic] = useState(null);
+    const [version, setVersion] = useState(readStoredVersion);
 
-    // the API takes one or more months as a comma separated list
-    const monthsParam = selectedMonths.join(',');
-
-    const selectedTimeLabel = selectedTimeInADay === 'afternoon'
-        ? 'Afternoon (2-5pm)'
-        : selectedTimeInADay === 'evening'
-            ? 'Evening (5-8pm)'
-            : null;
-
-    const selectedMonthsLabel = selectedMonths.length === 0
-        ? null
-        : selectedMonths.length <= 3
-            ? selectedMonths.map(formatMonthLabel).join(' + ')
-            : `${selectedMonths.length} months (${formatMonthLabel(selectedMonths[0])} - ${formatMonthLabel(selectedMonths[selectedMonths.length - 1])})`;
-
-    const activeFilterLabels = [
-        selectedMonthsLabel,
-        selectedTimeLabel,
-        selectedProgram,
-        selectedHelpTopic ? `Topic: ${selectedHelpTopic}` : null,
-    ].filter(Boolean);
-
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                setLoading(true);
-                setError('');
-                const response = await fetch(
-                    buildAnalyticsUrl({
-                        month: monthsParam,
-                        timeInADay: selectedTimeInADay,
-                        program: selectedProgram,
-                        helpTopic: selectedHelpTopic,
-                    }),
-                    {
-                        method: 'GET',
-                        credentials: 'include',
-                    },
-                );
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('Your admin session has expired. Please log in again.');
-                    }
-                    throw new Error('Failed to load analytics data.');
-                }
-
-                const data = await response.json();
-                setAnalytics(data);
-            } catch (fetchError) {
-                setError(fetchError.message || 'Could not load analytics.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAnalytics();
-    }, [monthsParam, selectedTimeInADay, selectedProgram, selectedHelpTopic]);
-
-    const handleTimeBarClick = (itemName) => {
-        const nextTimeInADay = itemName === 'Afternoon (2-5pm)' ? 'afternoon' : 'evening';
-        setSelectedTimeInADay((currentValue) => (currentValue === nextTimeInADay ? null : nextTimeInADay));
+    const handleToggle = () => {
+        const nextVersion = version === 'new' ? 'classic' : 'new';
+        setVersion(nextVersion);
+        try {
+            localStorage.setItem(VERSION_STORAGE_KEY, nextVersion);
+        } catch {
+            // storage can be unavailable (private mode); the switch still works for this visit
+        }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-8">
-            <div className="mx-auto max-w-7xl">
-                <div className="mb-6 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-                    </div>
-                </div>
-
-                {loading && <p className="text-sm text-slate-600">Loading analytics...</p>}
-
-                {!loading && error && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                        {error}
-                    </div>
-                )}
-
-                {!loading && !error && analytics && (
-                    <div className="space-y-6">
-                        {activeFilterLabels.length > 0 && (
-                            <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                <span>
-                                    Filtered to {activeFilterLabels.join(', ')}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedMonths([]);
-                                        setSelectedTimeInADay(null);
-                                        setSelectedProgram(null);
-                                        setSelectedHelpTopic(null);
-                                    }}
-                                    className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100"
-                                >
-                                    Clear all
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                            <MetricCard label="Total Check-ins" value={analytics.summary.total_checkins} />
-                            <MetricCard label="Unique Students" value={analytics.summary.total_students} />
-                            <MetricCard label="Signed Sessions" value={analytics.summary.total_signed} />
-                            <MetricCard label="Food Collected" value={analytics.summary.total_food_collected} />
-                            <MetricCard label="Hoodies Collected" value={analytics.summary.total_hoodies_collected} />
-                        </div>
-
-                        <VerticalBars
-                            title="Attendance by Month"
-                            data={analytics.attendance_by_month || []}
-                            selectedMonths={selectedMonths}
-                            onChangeMonths={setSelectedMonths}
-                        />
-
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            <HorizontalBarChart
-                                title="Attendance by Program"
-                                data={analytics.attendance_by_program || []}
-                                maxItems={6}
-                                barColors={['bg-emerald-600', 'bg-sky-600', 'bg-amber-500', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
-                                onItemClick={(item) =>
-                                    setSelectedProgram((currentProgram) => (currentProgram === item.name ? null : item.name))
-                                }
-                                activeItemName={selectedProgram}
-                            />
-                            <HorizontalBarChart
-                                title="Attendance Frequency"
-                                data={analytics.attendance_frequency || []}
-                                maxItems={3}
-                            />
-                        </div>
-
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            <HorizontalBarChart
-                                title="Afternoon vs Evening Check-ins"
-                                data={analytics.session_checkins || []}
-                                maxItems={2}
-                                onItemClick={(item) => handleTimeBarClick(item.name)}
-                                activeItemName={selectedTimeLabel}
-                            />
-                            <HorizontalBarChart
-                                title="Blockhouse vs L5 Check-ins"
-                                data={analytics.venue_checkins || []}
-                                maxItems={2}
-                            />
-                        </div>
-
-                        <div className="grid gap-4 lg:grid-cols-2">
-                            <HorizontalBarChart
-                                title="Top Help Topics"
-                                data={analytics.help_topics || []}
-                                maxItems={11}
-                                barColors={['bg-amber-500', 'bg-emerald-600', 'bg-sky-600', 'bg-rose-500', 'bg-violet-600', 'bg-cyan-600']}
-                                onItemClick={(item) =>
-                                    setSelectedHelpTopic((currentTopic) => (currentTopic === item.name ? null : item.name))
-                                }
-                                activeItemName={selectedHelpTopic}
-                            />
-
-                            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <h3 className="text-sm font-semibold text-slate-800">Top Attendees</h3>
-                                <div className="mt-4 overflow-x-auto">
-                                    <table className="min-w-full text-left text-sm">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-slate-500">
-                                                <th className="py-2 pr-4 font-medium">zID</th>
-                                                <th className="py-2 pr-4 font-medium">Name</th>
-                                                <th className="py-2 font-medium">Sessions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {(analytics.top_attendees || []).map((person) => (
-                                                <tr key={person.zid} className="border-b border-slate-50">
-                                                    <td className="py-2 pr-4 text-slate-700">{person.zid}</td>
-                                                    <td className="py-2 pr-4 text-slate-700">{person.name}</td>
-                                                    <td className="py-2 font-semibold text-slate-900">{person.sessions}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <AdminFeedbackPanel months={monthsParam} timeInADay={selectedTimeInADay} />
-                    </div>
-                )}
-            </div>
-        </div>
+        <>
+            {version === 'new' ? <NewDashboard /> : <ClassicDashboard />}
+            <VersionToggle version={version} onToggle={handleToggle} />
+        </>
     );
 }
