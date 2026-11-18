@@ -274,10 +274,6 @@
    an ancestor with opacity (or an opacity transition) becomes the tiles' backdrop root,
    cuts them off from the shapes behind, and the frosted haze disappears.
    The delay means quick filter clicks never dim at all. */
-.dash-tile > * {
-    transition: opacity 220ms ease;
-}
-
 .dash-refreshing .dash-tile > * {
     opacity: 0.55;
     transition: opacity 220ms ease 260ms;

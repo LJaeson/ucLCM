@@ -366,6 +366,23 @@ export function Collapse({ open, children, className = '', label }) {
     );
 }
 
+// A key number with its label, an optional small visual (trend line, meter) and a foot line.
+export function KpiTile({ label, value, suffix, visual, foot, className = '' }) {
+    return (
+        <div className={`dash-tile flex min-w-0 flex-col justify-between gap-4 p-4 xl:p-5 ${className}`}>
+            <p className="dash-label truncate">{label}</p>
+            <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-2">
+                <p className="dash-mono whitespace-nowrap text-[24px] font-medium leading-none tracking-[-0.03em] text-[var(--ink)] xl:text-[28px]">
+                    <RollingNumber value={value} />
+                    {suffix && <span className="ml-1.5 text-base font-normal tracking-normal text-[var(--ink-3)]">{suffix}</span>}
+                </p>
+                {visual}
+            </div>
+            <p className="dash-label min-h-4 truncate text-[var(--ink-2)]">{foot}</p>
+        </div>
+    );
+}
+
 export function Tile({ title, meta, actions, children, className = '' }) {
     return (
         <section className={`dash-tile flex min-w-0 flex-col p-5 xl:p-6 ${className}`}>

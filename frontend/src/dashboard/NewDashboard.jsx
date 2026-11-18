@@ -6,7 +6,7 @@ import { Collapse } from './charts';
 import FeedbackView from './FeedbackView';
 import IntroSequence from './IntroSequence';
 import OverviewView from './OverviewView';
-import { addMonths, formatClock, formatNumber, longMonth, monthKey } from './format';
+import { addMonths, currentSydneyMonth, formatClock, formatNumber, longMonth } from './format';
 import { useFlipList, useHeldWhileClosed } from './motion';
 import './dashboard.css';
 
@@ -60,8 +60,9 @@ function useAnalytics({ months, timeInADay, program, helpTopic, refreshTick }) {
             .then((data) => setResult({ key, paramsKey: loadedParamsKey, data, error: null, updatedAt: new Date() }))
             .catch((error) => {
                 if (isAbortError(error)) return;
-                // keep the last good data on screen and report the failure next to it
-                setResult((previous) => ({ ...previous, key, paramsKey: loadedParamsKey, error }));
+                // keep the last good data on screen, still dimmed as belonging to the old filters,
+                // and report the failure next to it
+                setResult((previous) => ({ ...previous, key, error }));
             });
         return () => controller.abort();
     }, [months, timeInADay, program, helpTopic, refreshTick]);
@@ -135,13 +136,14 @@ function ErrorPanel({ error, onRetry }) {
 }
 
 export default function NewDashboard() {
-    const [currentMonth] = useState(() => monthKey(new Date()));
+    const [currentMonth] = useState(currentSydneyMonth);
     const rootRef = useRef(null);
     const brandMarkRef = useRef(null);
     const [showIntro, setShowIntro] = useState(() => !introPlayed);
     const admin = useAdminName();
     const [tab, setTab] = useState(initialTab);
     const [selectedMonths, setSelectedMonths] = useState([]);
+    const [presetChoice, setPresetChoice] = useState('all');
     const [timeInADay, setTimeInADay] = useState(null);
     const [program, setProgram] = useState(null);
     const [helpTopic, setHelpTopic] = useState(null);
@@ -166,7 +168,10 @@ export default function NewDashboard() {
         window.history.replaceState(window.history.state, '', tab === 'feedback' ? `${pathname}${search}#feedback` : `${pathname}${search}`);
     }, [tab]);
 
-    const activePreset = PRESETS.find((preset) => sameMonths(presetMonths(preset.key, currentMonth), selectedMonths))?.key ?? 'custom';
+    // prefer the preset that was clicked when several expand to the same months (YTD in January)
+    const activePreset = sameMonths(presetMonths(presetChoice, currentMonth), selectedMonths)
+        ? presetChoice
+        : (PRESETS.find((preset) => sameMonths(presetMonths(preset.key, currentMonth), selectedMonths))?.key ?? 'custom');
     const sessionOption = SESSION_OPTIONS.find((option) => option.key === timeInADay);
     const monthScope =
         activePreset === 'custom'
@@ -212,7 +217,7 @@ export default function NewDashboard() {
     }, []);
 
     return (
-        <div ref={rootRef} className="dash">
+        <div ref={rootRef} className={showIntro ? 'dash z-[60]' : 'dash'}>
             <link rel="stylesheet" href={FONT_URL} precedence="default" />
             <Backdrop />
 
@@ -251,7 +256,10 @@ export default function NewDashboard() {
                                     key={preset.key}
                                     type="button"
                                     aria-pressed={activePreset === preset.key}
-                                    onClick={() => setSelectedMonths(presetMonths(preset.key, currentMonth))}
+                                    onClick={() => {
+                                        setPresetChoice(preset.key);
+                                        setSelectedMonths(presetMonths(preset.key, currentMonth));
+                                    }}
                                 >
                                     {preset.label}
                                 </button>

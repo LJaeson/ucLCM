@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ColumnChart, LegendSwatch, Meter, RankedBars, RollingNumber, SegmentedBar, Sparkline, Tile } from './charts';
+import { ColumnChart, KpiTile, LegendSwatch, Meter, RankedBars, RollingNumber, SegmentedBar, Sparkline, Tile } from './charts';
 import { SESSION_OPTIONS } from './api';
 import { formatNumber, formatPercent, longMonth, niceTicks, shortMonth } from './format';
 import { useFlipList } from './motion';
@@ -15,26 +15,6 @@ function countOf(list, name) {
     return list.find((item) => item.name === name)?.count || 0;
 }
 
-function KpiCell({ label, value, suffix, visual, foot, className = '' }) {
-    return (
-        <div className={`dash-tile flex min-w-0 flex-col justify-between gap-4 p-4 xl:p-5 ${className}`}>
-            <p className="dash-label truncate">{label}</p>
-            <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-2">
-                <p className="dash-mono whitespace-nowrap text-[24px] font-medium leading-none tracking-[-0.03em] text-[var(--ink)] xl:text-[28px]">
-                    <RollingNumber value={value} />
-                    {suffix && <span className="ml-1.5 text-base font-normal tracking-normal text-[var(--ink-3)]">{suffix}</span>}
-                </p>
-                {visual}
-            </div>
-            <div className="min-h-4">{foot}</div>
-        </div>
-    );
-}
-
-function FootText({ children }) {
-    return <p className="dash-label truncate text-[var(--ink-2)]">{children}</p>;
-}
-
 function KpiStrip({ analytics, scopeLabel, isFiltered }) {
     const summary = analytics.summary;
     const months = analytics.attendance_by_month || [];
@@ -44,7 +24,7 @@ function KpiStrip({ analytics, scopeLabel, isFiltered }) {
     return (
         <section aria-label="Key numbers">
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5 xl:gap-5">
-                <KpiCell
+                <KpiTile
                     className="col-span-2 md:col-span-1"
                     label={`Check-ins · ${scopeLabel}`}
                     value={formatNumber(summary.total_checkins)}
@@ -54,18 +34,18 @@ function KpiStrip({ analytics, scopeLabel, isFiltered }) {
                             label={`Monthly check-ins, last ${months.length} months`}
                         />
                     }
-                    foot={<FootText>Trend · last {months.length} months</FootText>}
+                    foot={<>Trend · last {months.length} months</>}
                 />
-                <KpiCell
+                <KpiTile
                     label="Unique students"
                     value={formatNumber(summary.total_students)}
                     foot={
-                        <FootText>
+                        <>
                             <span className="text-[var(--ink)]"><RollingNumber value={formatPercent(returningStudents, summary.total_students)} /></span> came back
-                        </FootText>
+                        </>
                     }
                 />
-                <KpiCell
+                <KpiTile
                     label="Signed sessions"
                     value={formatNumber(summary.total_signed)}
                     visual={
@@ -74,12 +54,12 @@ function KpiStrip({ analytics, scopeLabel, isFiltered }) {
                         </div>
                     }
                     foot={
-                        <FootText>
+                        <>
                             <span className="text-[var(--ink)]"><RollingNumber value={formatPercent(summary.total_signed, summary.total_checkins)} /></span> of check-ins
-                        </FootText>
+                        </>
                     }
                 />
-                <KpiCell
+                <KpiTile
                     label="Food collected"
                     value={formatNumber(summary.total_food_collected)}
                     visual={
@@ -88,15 +68,15 @@ function KpiStrip({ analytics, scopeLabel, isFiltered }) {
                         </div>
                     }
                     foot={
-                        <FootText>
+                        <>
                             <span className="text-[var(--ink)]"><RollingNumber value={formatPercent(summary.total_food_collected, summary.total_checkins)} /></span> of check-ins
-                        </FootText>
+                        </>
                     }
                 />
-                <KpiCell
+                <KpiTile
                     label="Hoodies collected"
                     value={formatNumber(summary.total_hoodies_collected)}
-                    foot={<FootText>{isFiltered ? 'By students in this view' : 'All students, all time'}</FootText>}
+                    foot={<>{isFiltered ? 'By students in this view' : 'All students, all time'}</>}
                 />
             </div>
         </section>

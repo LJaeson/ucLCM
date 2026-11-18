@@ -17,6 +17,13 @@ export function formatPercent(part, whole, digits = 0) {
     return `${((part / whole) * 100).toFixed(digits)}%`;
 }
 
+// the backend groups check-ins by Sydney time, so "this month" has to follow the same calendar
+export function currentSydneyMonth() {
+    const parts = new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
+    const value = (type) => parts.find((part) => part.type === type)?.value;
+    return `${value('year')}-${value('month')}`;
+}
+
 export function monthKey(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }

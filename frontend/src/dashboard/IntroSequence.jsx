@@ -41,6 +41,10 @@ function centreScale() {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// the intro can't be skipped, so it never waits longer than this for the server
+const NAME_TIMEOUT_MS = 2500;
+const DATA_TIMEOUT_MS = 12000;
+
 // Lets the timeline await a prop that turns true later (data loaded, name known).
 function useFlagWaiter(flag) {
     const flagRef = useRef(flag);
@@ -180,7 +184,8 @@ export default function IntroSequence({ ready, greetingName, nameReady, brandMar
             if (cancelled) return;
 
             // 5. "Hello {name}!" slides out from under the word, and the group lifts to stay centred
-            await waitForName();
+            // greet with "Hello!" rather than stall if the name is slow
+            await Promise.race([waitForName(), wait(NAME_TIMEOUT_MS)]);
             if (cancelled) return;
             const lift = greeting.offsetHeight / 2;
             const greeted = `translate(${shiftX}px, ${-lift}px)`;
@@ -206,7 +211,8 @@ export default function IntroSequence({ ready, greetingName, nameReady, brandMar
                         easing: EASE_OUT,
                     });
                 }, 0);
-                waitForData().then(async () => {
+                // past the timeout, reveal anyway; the dashboard shows its own loading state
+                Promise.race([waitForData(), wait(DATA_TIMEOUT_MS)]).then(async () => {
                     clearTimeout(reveal);
                     if (shown) await settle([play(loaderRef.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 200 })]);
                     resolve();

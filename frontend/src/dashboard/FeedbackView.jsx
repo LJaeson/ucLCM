@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchAdminJson, isAbortError } from './api';
-import { Collapse, ColumnChart, Meter, RankedBars, RollingNumber, Tile } from './charts';
+import { Collapse, ColumnChart, KpiTile, Meter, RankedBars, Tile } from './charts';
 import { formatDateTime, formatNumber, formatPercent, longMonth, shortMonth } from './format';
 import { useHeldWhileClosed } from './motion';
 
@@ -23,22 +23,6 @@ function Stars({ rating, size = 'text-sm' }) {
             <span className="text-[var(--ink)]">{'★'.repeat(filled)}</span>
             <span className="text-[var(--bar)]">{'★'.repeat(5 - filled)}</span>
         </span>
-    );
-}
-
-function KpiCell({ label, value, suffix, visual, foot }) {
-    return (
-        <div className="dash-tile flex min-w-0 flex-col justify-between gap-4 p-4 xl:p-5">
-            <p className="dash-label truncate">{label}</p>
-            <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-2">
-                <p className="dash-mono whitespace-nowrap text-[24px] font-medium leading-none tracking-[-0.03em] text-[var(--ink)] xl:text-[28px]">
-                    <RollingNumber value={value} />
-                    {suffix && <span className="ml-1.5 text-base font-normal tracking-normal text-[var(--ink-3)]">{suffix}</span>}
-                </p>
-                {visual}
-            </div>
-            <p className="dash-label min-h-4 truncate text-[var(--ink-2)]">{foot}</p>
-        </div>
     );
 }
 
@@ -179,15 +163,15 @@ export default function FeedbackView({
 
                 <section aria-label="Feedback key numbers">
                     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:gap-5">
-                        <KpiCell label={`Responses · ${scopeLabel}`} value={formatNumber(summary.total_feedback)} foot="Ratings submitted" />
-                        <KpiCell
+                        <KpiTile label={`Responses · ${scopeLabel}`} value={formatNumber(summary.total_feedback)} foot="Ratings submitted" />
+                        <KpiTile
                             label="Average rating"
                             value={Number(summary.average_rating || 0).toFixed(2)}
                             suffix="/ 5"
                             visual={<Stars rating={summary.average_rating || 0} size="text-base" />}
                             foot={`Across ${formatNumber(summary.total_feedback)} responses`}
                         />
-                        <KpiCell
+                        <KpiTile
                             label="With comments"
                             value={formatNumber(summary.total_with_comments)}
                             visual={
@@ -197,7 +181,7 @@ export default function FeedbackView({
                             }
                             foot={`${formatPercent(summary.total_with_comments, summary.total_feedback)} wrote something`}
                         />
-                        <KpiCell
+                        <KpiTile
                             label="Five-star share"
                             value={formatPercent(fiveStars, summary.total_feedback)}
                             foot={`${formatNumber(fiveStars)} five-star ratings`}
